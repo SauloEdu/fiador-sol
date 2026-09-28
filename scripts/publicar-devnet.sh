@@ -10,9 +10,11 @@ set -euo pipefail
 cd "${0:A:h}/.."
 export PATH="$HOME/.local/bin:$HOME/.local/share/solana/install/active_release/bin:$PATH"
 
-RPC="https://api.devnet.solana.com"
+RPC="${RPC_URL:-https://api.devnet.solana.com}"  # RPC_URL=http://127.0.0.1:8899 testa o script na rede local
 ADMIN_KEYPAIR="${ADMIN_KEYPAIR:-$HOME/.config/solana/id.json}"
 PROGRAM_KEYPAIR="target/deploy/fiador-keypair.json"
+# Dona do programa depois da publicação: fica só neste Mac, nunca na hospedagem (B-A22).
+UPGRADE_KEYPAIR="${UPGRADE_KEYPAIR:-$HOME/Documents/Fiador-backups/fiador-upgrade-devnet.json}"
 PROGRAM_ID=$(solana address -k "$PROGRAM_KEYPAIR")
 ADMIN=$(solana address -k "$ADMIN_KEYPAIR")
 
@@ -30,20 +32,43 @@ echo "\nCompilando e testando…"
 anchor build
 cargo test --quiet
 
+if [ ! -f "$UPGRADE_KEYPAIR" ]; then
+  mkdir -p "$(dirname "$UPGRADE_KEYPAIR")"
+  solana-keygen new --no-bip39-passphrase --silent -o "$UPGRADE_KEYPAIR"
+  chmod 600 "$UPGRADE_KEYPAIR"
+fi
+UPGRADE=$(solana address -k "$UPGRADE_KEYPAIR")
+
+# Na primeira publicação quem assina é o admin; nas atualizações, a chave de atualização.
+ATUAL=$(solana program show -u "$RPC" "$PROGRAM_ID" 2>/dev/null | awk '/Authority/ {print $2}' || true)
+AUTORIDADE="$ADMIN_KEYPAIR"
+[ "$ATUAL" = "$UPGRADE" ] && AUTORIDADE="$UPGRADE_KEYPAIR"
+
 echo "\nPublicando o programa na devnet…"
 solana program deploy -u "$RPC" \
   --program-id "$PROGRAM_KEYPAIR" \
-  --upgrade-authority "$ADMIN_KEYPAIR" \
+  --upgrade-authority "$AUTORIDADE" \
   --keypair "$ADMIN_KEYPAIR" \
   target/deploy/fiador.so
 
 echo "\nPreparando a demo na devnet (initialize, tBRL, selo, fundo)…"
 cp target/idl/fiador.json target/types/fiador.ts web/src/idl/
-(cd web && RPC_URL="$RPC" ADMIN_KEYPAIR="$ADMIN_KEYPAIR" DEMO_FILE=".demo.devnet.json" npm run --silent setup)
+(cd web && RPC_URL="$RPC" ADMIN_KEYPAIR="$ADMIN_KEYPAIR" DEMO_FILE="${DEMO_FILE:-.demo.devnet.json}" npm run --silent setup)
+
+# Com o protocolo inicializado, a posse do programa sai da chave do admin (que vai
+# para a hospedagem) e fica numa chave só deste Mac: quem invadir o servidor não
+# consegue trocar o programa (B-A22).
+if [ "$AUTORIDADE" = "$ADMIN_KEYPAIR" ]; then
+  echo "\nPassando a posse do programa para a chave de atualização ($UPGRADE)…"
+  solana program set-upgrade-authority -u "$RPC" "$PROGRAM_ID" \
+    --upgrade-authority "$ADMIN_KEYPAIR" \
+    --new-upgrade-authority "$UPGRADE_KEYPAIR" \
+    --keypair "$ADMIN_KEYPAIR"
+fi
 
 cat <<FIM
 
-Pronto. O programa está na devnet:
+Pronto. O programa está na devnet (dono: $UPGRADE; chave em $UPGRADE_KEYPAIR — guarde uma cópia fora do Mac):
   https://explorer.solana.com/address/$PROGRAM_ID?cluster=devnet
 
 Para rodar o site apontando para a devnet na sua máquina:

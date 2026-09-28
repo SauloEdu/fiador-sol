@@ -104,7 +104,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Correção:** **piso de ativos**. O depósito inicial nunca serve de cobertura: `from_pool ≤ total_assets − piso` e `free_assets` calculado sobre `total − piso`. "Reiniciar 1:1" (sugerido antes) está **errado**: tira dinheiro de quem entra depois.
 
 ### B-A22 · Uma chave só é autoridade de atualização, admin, emissora do tBRL e keeper 🔴 (devnet/produção)
-- **Status:** aberto · CISO-1, RTF-2
+- **Status:** **corrigido em parte em 2026-09-28**: `scripts/publicar-devnet.sh` passa a posse do programa (autoridade de atualização) para uma chave só do Mac (`~/Documents/Fiador-backups/fiador-upgrade-devnet.json`) logo depois do `initialize`; a chave que vai para a hospedagem (admin) não consegue trocar o programa. Testado na rede local (primeira publicação e atualização). **Falta:** separar a emissora do tBRL e o keeper do admin, e multisig em produção. Antes: aberto · CISO-1, RTF-2
 - **Sintoma:** `Anchor.toml:14`, `setup-demo.ts:46,84` e `server.ts:14-18` usam o mesmo `~/.config/solana/id.json`. O plano da devnet é colocar essa chave na hospedagem (`ADMIN_SECRET_KEY`). Quem ler as variáveis da hospedagem (conta invadida, colaborador, log ou dependência comprometida) publica um programa novo e **leva todos os cofres e o fundo**. Contradiz o item 13 do `docs/SEGURANCA.md` ("quatro carteiras").
 - **Correção:**
   - gerar 4 chaves: atualização, admin, emissão do tBRL e keeper;

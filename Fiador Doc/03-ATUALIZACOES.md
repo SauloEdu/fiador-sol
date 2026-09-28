@@ -2,6 +2,24 @@
 
 Da mais nova para a mais antiga. **Toda mudança no software ganha uma entrada aqui** (modelo no README). As entradas anteriores a 2026-09-24 foram reconstruídas a partir das conversas de construção.
 
+## 2026-09-28 · Posse do programa fora da hospedagem (B-A22)
+- **Quem:** Claude Opus 5.5
+- **O quê:** `scripts/publicar-devnet.sh`:
+  - cria uma chave de atualização só do Mac;
+  - publica com o admin;
+  - roda o `initialize`;
+  - passa a posse do programa para a chave de atualização.
+
+  Nas atualizações seguintes, assina com ela. A rede pode ser trocada por `RPC_URL`, o que permite testar o script na rede local.
+- **Por quê:** a chave do admin vai para a hospedagem (`ADMIN_SECRET_KEY`). Se ela também fosse a dona do programa, quem invadisse o servidor poderia trocar o programa inteiro.
+- **Arquivos:** `scripts/publicar-devnet.sh`, Fiador Doc 03 e 04.
+- **Verificação:** o script rodou inteiro contra a Solana local duas vezes:
+  - na primeira, publicou, inicializou (reaproveitando) e passou a posse;
+  - na segunda, atualizou assinando com a chave de atualização.
+
+  Depois, a posse local voltou ao admin.
+- **Pendências:** SOL de teste na devnet (torneira pede login do Saulo).
+
 ## 2026-09-28 · Pedido de saque com prazo (B-A12)
 - **Quem:** Claude Opus 5.5
 - **O quê:** o pedido de saque do fundo vale só por uma janela do tamanho do aviso prévio. Antes, um pedido antigo ficava pronto para sempre, e o investidor saía no instante em que via um calote chegando. A tela do investidor mostra o prazo e o pedido vencido.
