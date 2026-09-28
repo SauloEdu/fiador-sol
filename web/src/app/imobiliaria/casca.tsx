@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useD } from "@/components/DemoProvider";
+import { DEMO } from "@/lib/constants";
 import { fromUnits } from "@/lib/format";
 import { COR, Icone, reais } from "@/ui";
 import s from "./imob.module.css";
@@ -21,6 +22,8 @@ export function Casca({ children }: { children: ReactNode }) {
   const d = useD();
   const l = d.snap?.lease;
   const reservado = l && l.status !== "closed" && l.status !== "pending" ? fromUnits(l.coverageCap - l.poolCoveredTotal) : 0;
+  // Limite por imobiliária (B-A01): no máximo metade do fundo, conferido pelo programa a cada aceite.
+  const limite = d.snap ? fromUnits(d.snap.pool.totalAssets) * (DEMO.agencyMaxPoolBps / 10_000) : 0;
   return (
     <div className={s.casca}>
       <aside className={s.lateral}>
@@ -36,6 +39,7 @@ export function Casca({ children }: { children: ReactNode }) {
         <div className={s.reserva}>
           <span>Proteção do fundo reservada pelos seus contratos</span>
           <b>{reais(reservado)}</b>
+          <span>de até {reais(limite)} (metade do fundo, limite por imobiliária)</span>
           <span>{l && l.status !== "closed" ? "1 contrato ativo na Solana" : "nenhum contrato ativo"}</span>
         </div>
       </aside>

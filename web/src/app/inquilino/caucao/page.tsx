@@ -28,7 +28,7 @@ export default function Caucao() {
         <Cartao pad="6px 18px 12px" gap={0}>
           <Linha k="Caução guardada" v={l ? reais(l.depositRequired / 1_000_000) : "—"} />
           <Linha k="Quem pode movimentar" v="só as regras do contrato" />
-          <Linha k="Rendimento" v="10% ao ano (simulado)" />
+          <Linha k="Rendimento" v="simulado na demo; em produção, o da aplicação, sem taxa garantida" />
           <Linha k="Devolução" v="no fim, sem pedido de danos" />
         </Cartao>
         {x.movCofre.length > 0 && <Extrato titulo="Movimentações do cofre" mais={["Ver tudo", "/inquilino/extrato?conta=cofre"]}>{x.movCofre.slice(0, 3).map((m, k) => <Mov key={k} m={m} />)}</Extrato>}

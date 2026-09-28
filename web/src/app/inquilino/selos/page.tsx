@@ -32,7 +32,7 @@ export default function Selos() {
         <Cartao>
           <H2>Como diminuir a caução</H2>
           <div><Linha k="Sem histórico" v="3 aluguéis" /><Linha k="6 meses em dia" v="2 aluguéis" /><Linha k="12 em dia, em 2 contratos" v="1 aluguel" /></div>
-          <Txt peq><Forte>Calote é só terminar um contrato devendo.</Forte> Um mês pago pela caução e depois quitado não é calote.</Txt>
+          <Txt peq><Forte>Calote é terminar o contrato com algum mês sem quitar</Forte>, mesmo que a caução tenha pago o Carlos. Um mês pago pela caução e depois quitado não é calote.</Txt>
         </Cartao>
         {x.d.kp && (
           <Botao tipo="secundario" disabled={emDia < 3} onClick={() => window.open(`/reputacao/${x.d.kp!.inquilino.publicKey.toBase58()}`, "_blank")}>

@@ -69,6 +69,7 @@ pub fn handle_accept_lease(ctx: Context<AcceptLease>) -> Result<()> {
     let lease = &ctx.accounts.lease;
     require!(lease.status == LeaseStatus::Pending, FiadorError::InvalidStatus);
     require!(ctx.accounts.agency.active, FiadorError::AgencyInactive);
+    require!(!ctx.accounts.config.paused, FiadorError::ProtocolPaused);
 
     // Caução conforme a reputação: 3, 2 ou 1 aluguel.
     let deposit = lease

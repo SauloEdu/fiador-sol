@@ -1,11 +1,13 @@
 #!/bin/zsh
 # Liga a demo inteira na sua máquina: Solana local + programa + preparação + site.
-# Uso: ./scripts/demo-local.sh        (depois abra http://localhost:3000/demo)
+# Uso: ./scripts/demo-local.sh        (depois abra http://localhost:3000/apresentacao)
 # Ctrl+C encerra tudo.
 set -euo pipefail
 cd "${0:A:h}/.."
 export PATH="$HOME/.local/bin:$HOME/.local/share/solana/install/active_release/bin:$PATH"
 PROGRAM_ID=$(solana address -k target/deploy/fiador-keypair.json)
+# Quem publica o programa é o admin da demo: só ele pode chamar o initialize (B-A21).
+ADMIN_KEYPAIR="${ADMIN_KEYPAIR:-$HOME/.config/solana/id.json}"
 
 if [ ! -f target/deploy/fiador.so ]; then
   echo "Compilando o programa…"; anchor build --no-idl
@@ -13,7 +15,8 @@ fi
 
 if ! solana -u localhost cluster-version >/dev/null 2>&1; then
   echo "Ligando a Solana local…"
-  solana-test-validator --reset --ledger .localnet --bpf-program "$PROGRAM_ID" target/deploy/fiador.so --quiet &
+  solana-test-validator --reset --ledger .localnet \
+    --upgradeable-program "$PROGRAM_ID" target/deploy/fiador.so "$ADMIN_KEYPAIR" --quiet &
   VALIDATOR=$!
   trap 'kill $VALIDATOR 2>/dev/null' EXIT
   until solana -u localhost cluster-version >/dev/null 2>&1; do sleep 1; done

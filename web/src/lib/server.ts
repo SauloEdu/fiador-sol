@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { timingSafeEqual } from "node:crypto";
 import { Connection, Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY } from "@solana/web3.js";
 import { getProgram, keypairWallet } from "./program";
 
@@ -40,6 +41,24 @@ export async function chainNow(connection: Connection): Promise<number> {
   if (!info) return Math.floor(Date.now() / 1000);
   return Number(info.data.readBigInt64LE(32));
 }
+
+/**
+ * Senha da demo (B-A08, B-A19, B-A33): se DEMO_TOKEN estiver definida no servidor,
+ * as rotas que gastam a chave do admin exigem o cabeçalho x-demo-token igual a ela.
+ * Sem DEMO_TOKEN (demonstração na máquina local), as rotas ficam abertas.
+ * Devolve uma resposta 401 quando a senha falta, ou null quando pode seguir.
+ */
+export function exigirSenha(req: Request): Response | null {
+  // Chamadas disparadas por outros sites (B-A33): o navegador marca Sec-Fetch-Site.
+  if (req.headers.get("sec-fetch-site") === "cross-site") return json({ erro: "Chamada de outro site recusada." }, 403);
+  const esperada = process.env.DEMO_TOKEN;
+  if (!esperada) return null;
+  const recebida = req.headers.get("x-demo-token") ?? "";
+  if (recebida.length === esperada.length && timingSafeEqual(Buffer.from(recebida), Buffer.from(esperada))) return null;
+  return json({ erro: "Senha da demo necessária." }, 401);
+}
+
+export const demoProtegida = () => !!process.env.DEMO_TOKEN;
 
 export function isLocal(rpc: string) {
   return rpc.includes("127.0.0.1") || rpc.includes("localhost");

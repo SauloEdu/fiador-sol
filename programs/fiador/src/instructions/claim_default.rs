@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::errors::FiadorError;
+use crate::events::*;
 use crate::state::*;
 use crate::utils::move_tokens;
 
@@ -75,10 +76,19 @@ pub fn handle_claim_default(ctx: Context<ClaimDefault>) -> Result<()> {
     // O fundo só entra depois de `coverage_waiting_periods` aluguéis pagos, com
     // cobertura que cresce a cada aluguel pago (até o teto do contrato), e paga
     // só a parte fora da franquia do proprietário (antifraude, camada 1).
-    let from_pool = lease
-        .after_deductible(missing)
-        .min(lease.coverage_available())
-        .min(ctx.accounts.pool.total_assets);
+    // Com o protocolo pausado, o fundo não paga ninguém (a caução continua pagando).
+    let from_pool = if ctx.accounts.config.paused {
+        0
+    } else {
+        lease
+            .after_deductible(missing)
+            .min(lease.coverage_available())
+            .min(ctx.accounts.pool.total_assets)
+    };
+    // Quarentena: o pagamento do fundo fica retido no cofre do fundo e só vai ao
+    // proprietário depois do prazo, se ninguém congelar (antifraude, camada 2).
+    let quarantine = ctx.accounts.config.pool_quarantine_secs;
+    let pay_pool_now = if quarantine > 0 { 0 } else { from_pool };
 
     let token_program = ctx.accounts.token_program.key();
     let landlord_to = ctx.accounts.landlord_token.to_account_info();
@@ -108,7 +118,7 @@ pub fn handle_claim_default(ctx: Context<ClaimDefault>) -> Result<()> {
         landlord_to,
         &ctx.accounts.mint,
         ctx.accounts.pool.to_account_info(),
-        from_pool,
+        pay_pool_now,
         Some(&[pool_seeds]),
     )?;
 
@@ -128,6 +138,19 @@ pub fn handle_claim_default(ctx: Context<ClaimDefault>) -> Result<()> {
     // paga primeiro quando a inquilina quitar (B-A10).
     let shortfall = missing - from_pool;
     lease.landlord_debt = lease.landlord_debt.checked_add(shortfall).ok_or(FiadorError::MathOverflow)?;
+    if pay_pool_now < from_pool {
+        lease.pool_pending = lease.pool_pending.checked_add(from_pool).ok_or(FiadorError::MathOverflow)?;
+        lease.pool_release_ts = now.checked_add(quarantine).ok_or(FiadorError::MathOverflow)?;
+    }
+    emit!(AtrasoCobrado {
+        lease: ctx.accounts.lease.key(),
+        periodo: index as u8,
+        da_caucao: from_deposit,
+        do_fundo: from_pool,
+        em_quarentena: pay_pool_now < from_pool,
+        falta_ao_proprietario: shortfall,
+    });
+    let lease = &mut ctx.accounts.lease;
     lease.periods[index] = PeriodState::Covered;
     lease.defaults = lease.defaults.saturating_add(1);
     lease.status = LeaseStatus::Defaulted;

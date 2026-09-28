@@ -56,4 +56,16 @@ pub enum FiadorError {
     PeriodNotStarted,
     #[msg("A disputa de danos já foi decidida")]
     DisputeAlreadyResolved,
+    #[msg("O protocolo está pausado para investigação")]
+    ProtocolPaused,
+    #[msg("Há um pagamento do fundo em quarentena neste contrato")]
+    PoolPaymentPending,
+    #[msg("O pagamento do fundo está congelado para investigação")]
+    PoolPaymentFrozen,
+    #[msg("A quarentena do pagamento do fundo ainda não terminou")]
+    QuarantineActive,
+    #[msg("Não há pagamento do fundo em quarentena")]
+    NothingPending,
+    #[msg("Só quem publicou o programa pode inicializá-lo")]
+    NotUpgradeAuthority,
 }

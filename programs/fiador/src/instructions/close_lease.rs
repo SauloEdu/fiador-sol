@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{Mint, TokenAccount, TokenInterface};
 
 use crate::errors::FiadorError;
+use crate::events::*;
 use crate::state::*;
 use crate::utils::move_tokens;
 
@@ -71,18 +72,25 @@ pub fn handle_close_lease(ctx: Context<CloseLease>) -> Result<()> {
         lease.dispute_resolved || now > window_end,
         FiadorError::DisputeWindowOpen
     );
+    // Pagamento do fundo em quarentena precisa ser liberado ou cancelado antes.
+    require!(lease.pool_pending == 0, FiadorError::PoolPaymentPending);
 
     // 1) Caução restante repõe o pool.
     let repay_pool = lease.deposit_balance.min(lease.pool_debt);
     let to_tenant = lease.deposit_balance - repay_pool;
 
     // 2) Rendimento simulado sobre a caução devolvida, limitado ao saldo da reserva.
-    let elapsed = (now - lease.start_ts).max(0) as u128;
+    //    Um "ano" são 12 períodos do contrato (na produção, ~1 ano; na demo, 12 min),
+    //    e o rendimento para de correr no fim do prazo, não no fechamento (B-A20).
+    //    A tela usa a mesma conta (`rendimento` em web/src/lib/historia.ts).
+    let fim = lease.due_ts(lease.total_periods as usize - 1)?.min(now);
+    let elapsed = (fim - lease.start_ts).max(0) as u128;
+    let year = (lease.period_secs as u128).checked_mul(12).ok_or(FiadorError::MathOverflow)?;
     let accrued = (to_tenant as u128)
         .checked_mul(lease.apy_bps as u128)
         .and_then(|v| v.checked_mul(elapsed))
         .ok_or(FiadorError::MathOverflow)?
-        / (BPS as u128 * SECONDS_PER_YEAR as u128);
+        / (BPS as u128 * year);
     let yield_paid = (accrued as u64).min(ctx.accounts.yield_reserve.amount);
 
     let token_program = ctx.accounts.token_program.key();
@@ -141,6 +149,13 @@ pub fn handle_close_lease(ctx: Context<CloseLease>) -> Result<()> {
         profile.defaults = profile.defaults.saturating_add(1);
     }
 
+    emit!(ContratoEncerrado {
+        lease: ctx.accounts.lease.key(),
+        devolvido_a_inquilina: to_tenant,
+        rendimento: yield_paid,
+        rendimento_devido: u64::try_from(accrued).unwrap_or(u64::MAX),
+        calote: defaulted,
+    });
     let lease = &mut ctx.accounts.lease;
     lease.pool_debt = still_owed;
     lease.deposit_balance = 0;

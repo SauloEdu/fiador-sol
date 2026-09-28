@@ -151,11 +151,11 @@ Erros de documentação corrigidos nesta revisão: B-016 (B-A11 era falso alarme
 5. Refazer a tese jurídica e montar os slides de regulação (seção 4.1) e de sinistralidade (seção 4.2). Donos: advogado regulatório e atuário.
 
 **Antes da devnet pública**
-- `initialize` preso à autoridade de atualização, e publicação mais inicialização num único script (B-A21).
+- ✅ `initialize` preso à autoridade de atualização (28/09, B-025); publicação mais inicialização num único script (B-A21).
 - Quatro chaves separadas, com a de atualização fora da hospedagem (B-A22).
 - Keeper por cron com segredo, chave própria e limite de gasto (B-A15, B-A32).
 - Configuração por variáveis de ambiente, com checagem (B-A35).
-- Pausa e descredenciamento (B-A14); eventos `emit!` (B-A38).
+- ✅ Pausa e descredenciamento (28/09; falta `set_admin`, B-A14); ✅ eventos `emit!` nas movimentações principais (28/09; faltam aporte e saque, B-A38).
 - Alertas de saldo de SOL, de fundo livre e de erro do keeper.
 - `security.txt` e build verificável.
 - Teste de invariantes I1–I8 na suíte.

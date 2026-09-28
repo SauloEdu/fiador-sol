@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{mint_to, Mint, MintTo, Token2022, TokenAccount, TokenInterface};
 
 use crate::errors::FiadorError;
+use crate::events::*;
 use crate::state::*;
 use crate::utils::move_tokens;
 
@@ -147,6 +148,15 @@ pub fn handle_pay_rent(ctx: Context<PayRent>) -> Result<()> {
         lease.paid_late = lease.paid_late.saturating_add(1);
         profile.late = profile.late.saturating_add(1);
     }
+
+    emit!(AluguelPago {
+        lease: lease.key(),
+        periodo: index as u8,
+        em_dia: on_time,
+        ao_proprietario: to_landlord,
+        ao_fundo: to_pool,
+        a_caucao: to_vault,
+    });
 
     if lease.status == LeaseStatus::Defaulted && !lease.has_covered() {
         lease.status = LeaseStatus::Active;

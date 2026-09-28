@@ -11,13 +11,15 @@ import { fromUnits } from "@/lib/format";
 import * as H from "@/lib/historia";
 import { Carimbo, COR, Icone, reais } from "@/ui";
 import { Mini, simbolos } from "../imobiliaria/mini";
+import { SenhaDemo } from "@/components/SenhaDemo";
 import s from "./palco.module.css";
+import { apiPost } from "@/lib/api";
 
 /** Pix simulado sem tela (o Palco conduz a história; o celular mostra o app de verdade). */
 async function pixAutomatico(carteira: PublicKey, valor: number) {
-  const c = await fetch("/api/pix/cobranca", { method: "POST", body: JSON.stringify({ carteira: carteira.toBase58(), valor }) }).then((r) => r.json());
+  const c = await apiPost<{ id: string; erro?: string }>("/api/pix/cobranca", { carteira: carteira.toBase58(), valor });
   if (c.erro) throw new Error(c.erro);
-  const r = await fetch("/api/pix/confirmar", { method: "POST", body: JSON.stringify({ id: c.id }) }).then((x) => x.json());
+  const r = await apiPost<{ erro?: string }>("/api/pix/confirmar", { id: c.id });
   if (r.erro) throw new Error(r.erro);
 }
 
@@ -29,7 +31,7 @@ function Palco() {
   const l = d.snap?.lease ?? null;
   const agora = agoraChain(d.snap);
   const [erro, setErro] = useState<string | null>(null);
-  const HISTORIA = ["contrato", "caucao", "aluguel", "quitacao", "cobranca", "encerrou", "acerto", "danos", "decisao"];
+  const HISTORIA = ["contrato", "caucao", "aluguel", "quitacao", "cobranca", "encerrou", "acerto", "danos", "decisao", "risco"];
   const ev = d.eventos.filter((e) => e.tipo === "ok" && e.sig && e.kind && HISTORIA.includes(e.kind) && (e.leaseId === undefined || e.leaseId === d.leaseId));
   const ultimo = ev[0];
 
@@ -122,6 +124,11 @@ function Palco() {
           <span className={s.esperando}><span className={s.pontinho} aria-hidden="true" />{proximo.rotulo}: {proximo.espera}</span>
         ) : null}
       </header>
+      <div className={s.faixaRisco}>
+        <SenhaDemo protegida={!!d.snap?.protegida} />
+        {d.snap?.pausado && <strong className={s.pausado}>Protocolo pausado pela equipe para investigação</strong>}
+        <Link href="/risco" className={s.golpe}>E se for golpe? Abrir a Central de risco</Link>
+      </div>
       {erro && <p role="alert" className={s.erro}>{erro}</p>}
       <div className={s.grade}>
         <div className={s.celularCol}>

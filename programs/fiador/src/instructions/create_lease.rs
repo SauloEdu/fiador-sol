@@ -47,6 +47,7 @@ pub struct CreateLease<'info> {
 
 pub fn handle_create_lease(ctx: Context<CreateLease>, lease_id: u64, terms: LeaseTerms) -> Result<()> {
     let config = &ctx.accounts.config;
+    require!(!config.paused, FiadorError::ProtocolPaused);
     let landlord = ctx.accounts.landlord.key();
     let tenant = ctx.accounts.tenant.key();
 

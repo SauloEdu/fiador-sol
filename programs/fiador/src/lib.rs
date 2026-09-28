@@ -3,6 +3,7 @@
 use anchor_lang::prelude::*;
 
 pub mod errors;
+pub mod events;
 pub mod instructions;
 pub mod state;
 pub mod utils;
@@ -94,5 +95,30 @@ pub mod fiador {
     /// Admin define o mint do selo "Bom Pagador" (Token-2022 intransferível).
     pub fn set_badge_mint(ctx: Context<SetBadgeMint>) -> Result<()> {
         instructions::set_badge_mint::handle_set_badge_mint(ctx)
+    }
+
+    /// Admin pausa ou retoma o protocolo (resposta a incidente).
+    pub fn set_paused(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
+        instructions::emergency::handle_set_paused(ctx, paused)
+    }
+
+    /// Admin suspende ou reativa uma imobiliária.
+    pub fn set_agency_active(ctx: Context<SetAgencyActive>, active: bool) -> Result<()> {
+        instructions::emergency::handle_set_agency_active(ctx, active)
+    }
+
+    /// Admin congela ou descongela um pagamento do fundo em quarentena.
+    pub fn freeze_pool_payment(ctx: Context<AdminPoolPayment>, frozen: bool) -> Result<()> {
+        instructions::emergency::handle_freeze_pool_payment(ctx, frozen)
+    }
+
+    /// Admin cancela um pagamento do fundo em quarentena (golpe confirmado).
+    pub fn cancel_pool_payment(ctx: Context<AdminPoolPayment>) -> Result<()> {
+        instructions::emergency::handle_cancel_pool_payment(ctx)
+    }
+
+    /// Qualquer um libera ao proprietário o pagamento do fundo depois da quarentena.
+    pub fn release_pool_payment(ctx: Context<ReleasePoolPayment>) -> Result<()> {
+        instructions::emergency::handle_release_pool_payment(ctx)
     }
 }

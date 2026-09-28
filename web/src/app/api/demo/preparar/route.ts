@@ -1,6 +1,6 @@
 import { LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import { getOrCreateAssociatedTokenAccount } from "@solana/spl-token";
-import { serverContext, isLocal, json, errorMessage } from "@/lib/server";
+import { serverContext, isLocal, json, errorMessage, exigirSenha } from "@/lib/server";
 import { agencyPda, configPda } from "@/lib/pdas";
 
 export const dynamic = "force-dynamic";
@@ -10,6 +10,8 @@ export const dynamic = "force-dynamic";
  * imobiliária (assinado pelo admin) e conta de tBRL do proprietário.
  */
 export async function POST(req: Request) {
+  const bloqueio = exigirSenha(req);
+  if (bloqueio) return bloqueio;
   try {
     const body = (await req.json()) as Record<string, string>;
     const { connection, admin, program, mint, demo } = serverContext();

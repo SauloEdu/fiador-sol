@@ -26,7 +26,7 @@ const sleep = (s: number) => new Promise((r) => setTimeout(r, s * 1000));
 async function keeper() {
   // Mesmo código da rota /api/keeper, chamado direto.
   const mod = await import("../src/app/api/keeper/route");
-  const r = await mod.POST();
+  const r = await mod.POST(new Request("http://localhost/api/keeper", { method: "POST" }));
   return r.json();
 }
 

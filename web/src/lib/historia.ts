@@ -81,12 +81,19 @@ export function mesesDeCaucao(p: Snapshot["profile"]) {
   return 3;
 }
 
-/** Rendimento simulado da caução: 10% ao ano, e 1 ano = 12 períodos na demonstração. */
+/**
+ * Rendimento simulado da caução, com a mesma conta do programa (`close_lease`):
+ * taxa anual do contrato, 1 ano = 12 meses do contrato, contado só até o fim do prazo,
+ * sobre a caução que está no cofre. Em produção, o rendimento viria de aplicação real,
+ * sem taxa garantida (B-A20).
+ */
 export function rendimento(l: LeaseView, agora: number) {
   if (l.status === "pending" || l.startTs === 0) return 0;
-  const fim = l.status === "closed" ? l.endTs : Math.min(agora, vencimento(l, l.totalPeriods - 1));
+  const fimPrazo = vencimento(l, l.totalPeriods - 1);
+  const fim = l.status === "closed" ? Math.min(l.endTs, fimPrazo) : Math.min(agora, fimPrazo);
   const anos = Math.max(0, fim - l.startTs) / (l.periodSecs * 12);
-  return fromUnits(l.depositRequired) * 0.1 * anos;
+  const base = l.status === "closed" ? l.depositRequired : l.depositBalance;
+  return fromUnits(base) * (l.apyBps / 10_000) * anos;
 }
 
 export function mmss(s: number) {

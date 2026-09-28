@@ -69,3 +69,8 @@
   .celularCol { position: static; }
   .imobLinha { grid-template-columns: minmax(0, 1fr); }
 }
+
+.faixaRisco { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: flex-end; }
+.golpe { font-weight: 700; color: var(--verm); text-decoration: none; border: 1.5px solid var(--verm); border-radius: 999px; padding: 6px 14px; }
+.golpe:hover { background: var(--verm-s); }
+.pausado { color: var(--verm); background: var(--verm-s); border-radius: 8px; padding: 6px 12px; }

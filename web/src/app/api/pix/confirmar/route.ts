@@ -1,12 +1,14 @@
 import { PublicKey } from "@solana/web3.js";
 import { getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
-import { serverContext, json, withinLimit, errorMessage } from "@/lib/server";
+import { serverContext, json, withinLimit, errorMessage, exigirSenha } from "@/lib/server";
 import { buscarCobranca } from "@/lib/pix";
 
 export const dynamic = "force-dynamic";
 
 /** "Já paguei": o servidor (dono da emissão do tBRL) credita a carteira. Só em rede de teste. */
 export async function POST(req: Request) {
+  const bloqueio = exigirSenha(req);
+  if (bloqueio) return bloqueio;
   const { id } = (await req.json()) as { id: string };
   const c = buscarCobranca(id);
   if (!c) return json({ erro: "Cobrança não encontrada" }, 404);

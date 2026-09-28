@@ -1,0 +1,18 @@
+.pagina { max-width: 1100px; margin: 0 auto; padding: 24px 20px 64px; display: flex; flex-direction: column; gap: 20px; }
+.topo { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+.topo h1 { margin: 0; font-size: 28px; color: var(--tinta); letter-spacing: -0.01em; }
+.topo p { margin: 4px 0 0; color: var(--graf); max-width: 60ch; }
+.logo { font-weight: 800; font-size: 20px; color: var(--tinta); text-decoration: none; }
+.logo span { color: var(--caneta); }
+.voltar { margin-left: auto; font-weight: 650; }
+.status { margin: 0; color: var(--graf); font-weight: 650; }
+.grade { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+.titulo { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.titulo h2 { margin: 0; font-size: 18px; color: var(--tinta); }
+.chip { font-size: 13px; font-weight: 700; border-radius: 999px; padding: 4px 12px; white-space: nowrap; }
+.botoes { display: flex; flex-direction: column; gap: 8px; }
+.registro h2 { font-size: 16px; margin: 0 0 8px; color: var(--tinta); }
+.registro ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.registro li { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; background: var(--cartao); border: 1px solid var(--linha); border-radius: 10px; padding: 10px 14px; font-size: 14px; }
+.registro li span:first-child { color: var(--apagado); font-variant-numeric: tabular-nums; }
+@media (max-width: 560px) { .registro li { grid-template-columns: 1fr; } .voltar { margin-left: 0; } }

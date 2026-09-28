@@ -6,8 +6,8 @@ Atualizado em 2026-09-28. Uma página para consultar antes de reuniões e da ban
 
 | Área | Situação | Onde ler |
 |---|---|---|
-| Programa na Solana | 16 instruções, **59/59 testes passando** (inclui regressões das brechas corrigidas, cobertura crescente, franquia e teste de invariantes). Endereço novo `AxA7…` desde 28/09 (B-023). Roda na rede local; ainda não foi publicado na devnet. | [01-ARQUITETURA](01-ARQUITETURA.md) |
-| Segurança do software | **28 brechas de segurança abertas** (B-A08 a B-A41). Fechadas: B-A36 (27/09), B-A09, B-A10, B-A18 e B-A26 (28/09); B-A23 e B-A25 corrigidas em parte; B-A11 era falso alarme. Continua com prova de ataque aberta: B-A12. | [07-SEGURANCA-SOFTWARE](07-SEGURANCA-SOFTWARE.md), [04-BUGS](04-BUGS.md) |
+| Programa na Solana | 21 instruções, **66/66 testes passando** (regressões das brechas corrigidas, antifraude, resposta a golpe, `initialize` protegido e invariantes). Endereço novo `AxA7…` desde 28/09 (B-023). Roda na rede local; ainda não foi publicado na devnet. | [01-ARQUITETURA](01-ARQUITETURA.md) |
+| Segurança do software | **26 brechas de segurança abertas** (B-A08 a B-A41). Fechadas: B-A36 (27/09); B-A09, B-A10, B-A18, B-A20, B-A21 e B-A26 (28/09); em parte: B-A08, B-A14, B-A19, B-A23, B-A24, B-A25, B-A33, B-A38; B-A11 era falso alarme. | [07-SEGURANCA-SOFTWARE](07-SEGURANCA-SOFTWARE.md), [04-BUGS](04-BUGS.md) |
 | Golpes e resposta a incidentes | 8 tipos de golpe mapeados e roteiro de resposta em 6 passos. Hoje **não há pausa, suspensão de imobiliária nem quarentena** no programa: a resposta começaria tarde. | [08-RESPOSTA-A-GOLPE](08-RESPOSTA-A-GOLPE.md) |
 | Riscos de negócio, jurídicos e de dados | Tese jurídica a refazer; preço do fundo a recalibrar; faltam identidade e documentos LGPD. | [06-CONSELHO-SEGURANCA](06-CONSELHO-SEGURANCA.md) |
 | Código no git | **Só 4 arquivos** versionados; o resto está só no notebook, sem backup. | B-A37 |
@@ -26,10 +26,10 @@ Atualizado em 2026-09-28. Uma página para consultar antes de reuniões e da ban
 ## As 7 coisas mais urgentes antes da banca
 
 1. ~~`.env*` no `.gitignore`~~ (27/09) e ~~commit do código~~ (28/09, `4515e52`). Falta o push para o GitHub e o backup cifrado das chaves fora do notebook (B-A37).
-2. `DEMO_TOKEN` nas rotas da demo e RPC dedicado, para ninguém derrubar a apresentação (B-A08, B-A26, B-A34).
+2. ~~`DEMO_TOKEN` nas rotas da demo~~ (28/09). Falta RPC dedicado na devnet (B-A34).
 3. ~~No programa: imobiliária ≠ proprietário, mês máximo, aluguel mínimo, só paga mês que já começou, `landlord_debt`, disputa não reabre~~ (feito em 28/09).
-4. ~~Cobertura crescente + franquia~~ (feito em 28/09). Falta `pause`/`suspend_agency` e quarentena, para conseguir responder a um golpe (08, seção 4).
-5. Tirar da tela as promessas erradas: rendimento de 10%, "dados fora da blockchain", "calote é só terminar devendo".
+4. ~~Cobertura crescente + franquia~~ e ~~pausa, suspensão de imobiliária e quarentena~~ (feito em 28/09; Central de risco em `/risco`).
+5. ~~Tirar da tela as promessas erradas~~ (28/09: rendimento igual ao programa e sem taxa prometida, "nome e CPF fora da blockchain", definição de calote corrigida).
 6. Reescrever o "Ponto jurídico" do README (06, seção 4.1).
 7. Slide de riscos com a resposta de cada pergunta abaixo.
 

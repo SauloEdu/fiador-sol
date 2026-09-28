@@ -173,6 +173,100 @@
       "args": []
     },
     {
+      "name": "cancel_pool_payment",
+      "docs": [
+        "Admin cancela um pagamento do fundo em quarentena (golpe confirmado)."
+      ],
+      "discriminator": [
+        100,
+        81,
+        108,
+        96,
+        216,
+        164,
+        41,
+        243
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lease",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  97,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lease.landlord",
+                "account": "Lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.tenant",
+                "account": "Lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.lease_id",
+                "account": "Lease"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "claim_default",
       "docs": [
         "Qualquer um cobra um mês vencido além da carência: caução e pool pagam o proprietário."
@@ -707,6 +801,105 @@
       "args": []
     },
     {
+      "name": "freeze_pool_payment",
+      "docs": [
+        "Admin congela ou descongela um pagamento do fundo em quarentena."
+      ],
+      "discriminator": [
+        8,
+        172,
+        222,
+        217,
+        217,
+        55,
+        151,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lease",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  97,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lease.landlord",
+                "account": "Lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.tenant",
+                "account": "Lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.lease_id",
+                "account": "Lease"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "frozen",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "init_profile",
       "docs": [
         "Inquilino cria seu perfil de reputação."
@@ -879,6 +1072,92 @@
             "Conta do admin de onde sai o depósito inicial permanente do pool."
           ],
           "writable": true
+        },
+        {
+          "name": "program_data",
+          "docs": [
+            "Dados do programa publicado: só quem publicou (a autoridade de atualização)",
+            "pode inicializar. Sem isso, qualquer carteira que chamasse primeiro na devnet",
+            "viraria admin para sempre e escolheria o mint (B-A21)."
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  147,
+                  218,
+                  111,
+                  145,
+                  73,
+                  243,
+                  192,
+                  173,
+                  110,
+                  68,
+                  193,
+                  219,
+                  109,
+                  37,
+                  166,
+                  206,
+                  6,
+                  96,
+                  92,
+                  105,
+                  105,
+                  55,
+                  45,
+                  230,
+                  174,
+                  232,
+                  237,
+                  185,
+                  2,
+                  210,
+                  151,
+                  193
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                2,
+                168,
+                246,
+                145,
+                78,
+                136,
+                161,
+                176,
+                226,
+                16,
+                21,
+                62,
+                247,
+                99,
+                174,
+                43,
+                0,
+                194,
+                185,
+                61,
+                22,
+                193,
+                36,
+                210,
+                192,
+                83,
+                122,
+                16,
+                4,
+                128,
+                0,
+                0
+              ]
+            }
+          }
         },
         {
           "name": "token_program"
@@ -1545,6 +1824,135 @@
       ]
     },
     {
+      "name": "release_pool_payment",
+      "docs": [
+        "Qualquer um libera ao proprietário o pagamento do fundo depois da quarentena."
+      ],
+      "discriminator": [
+        165,
+        201,
+        91,
+        39,
+        206,
+        130,
+        186,
+        153
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Qualquer carteira (o keeper) libera depois do prazo; só paga a taxa."
+          ],
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lease",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  97,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lease.landlord",
+                "account": "Lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.tenant",
+                "account": "Lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.lease_id",
+                "account": "Lease"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "landlord_token",
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "request_withdraw",
       "docs": [
         "Investidor pede saque (aviso prévio)."
@@ -1737,6 +2145,79 @@
       ]
     },
     {
+      "name": "set_agency_active",
+      "docs": [
+        "Admin suspende ou reativa uma imobiliária."
+      ],
+      "discriminator": [
+        134,
+        79,
+        209,
+        241,
+        194,
+        127,
+        64,
+        14
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "agency",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "agency.authority",
+                "account": "Agency"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "active",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "set_badge_mint",
       "docs": [
         "Admin define o mint do selo \"Bom Pagador\" (Token-2022 intransferível)."
@@ -1787,6 +2268,56 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "set_paused",
+      "docs": [
+        "Admin pausa ou retoma o protocolo (resposta a incidente)."
+      ],
+      "discriminator": [
+        91,
+        60,
+        125,
+        192,
+        176,
+        225,
+        166,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1866,6 +2397,112 @@
         93,
         148,
         94
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "AluguelPago",
+      "discriminator": [
+        19,
+        86,
+        83,
+        187,
+        131,
+        230,
+        23,
+        127
+      ]
+    },
+    {
+      "name": "AtrasoCobrado",
+      "discriminator": [
+        144,
+        183,
+        0,
+        250,
+        16,
+        17,
+        178,
+        207
+      ]
+    },
+    {
+      "name": "ContratoEncerrado",
+      "discriminator": [
+        114,
+        85,
+        136,
+        144,
+        102,
+        210,
+        233,
+        132
+      ]
+    },
+    {
+      "name": "ImobiliariaAtualizada",
+      "discriminator": [
+        60,
+        201,
+        113,
+        252,
+        111,
+        23,
+        205,
+        63
+      ]
+    },
+    {
+      "name": "PagamentoDoFundoCancelado",
+      "discriminator": [
+        183,
+        193,
+        122,
+        82,
+        136,
+        98,
+        159,
+        59
+      ]
+    },
+    {
+      "name": "PagamentoDoFundoCongelado",
+      "discriminator": [
+        141,
+        199,
+        201,
+        216,
+        90,
+        212,
+        221,
+        206
+      ]
+    },
+    {
+      "name": "PagamentoDoFundoLiberado",
+      "discriminator": [
+        29,
+        57,
+        115,
+        188,
+        81,
+        15,
+        142,
+        140
+      ]
+    },
+    {
+      "name": "ProtocoloPausado",
+      "discriminator": [
+        235,
+        0,
+        34,
+        10,
+        79,
+        89,
+        51,
+        71
       ]
     }
   ],
@@ -2004,6 +2641,36 @@
       "code": 6026,
       "name": "DisputeAlreadyResolved",
       "msg": "A disputa de danos já foi decidida"
+    },
+    {
+      "code": 6027,
+      "name": "ProtocolPaused",
+      "msg": "O protocolo está pausado para investigação"
+    },
+    {
+      "code": 6028,
+      "name": "PoolPaymentPending",
+      "msg": "Há um pagamento do fundo em quarentena neste contrato"
+    },
+    {
+      "code": 6029,
+      "name": "PoolPaymentFrozen",
+      "msg": "O pagamento do fundo está congelado para investigação"
+    },
+    {
+      "code": 6030,
+      "name": "QuarantineActive",
+      "msg": "A quarentena do pagamento do fundo ainda não terminou"
+    },
+    {
+      "code": 6031,
+      "name": "NothingPending",
+      "msg": "Não há pagamento do fundo em quarentena"
+    },
+    {
+      "code": 6032,
+      "name": "NotUpgradeAuthority",
+      "msg": "Só quem publicou o programa pode inicializá-lo"
     }
   ],
   "types": [
@@ -2034,6 +2701,70 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AluguelPago",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "periodo",
+            "type": "u8"
+          },
+          {
+            "name": "em_dia",
+            "type": "bool"
+          },
+          {
+            "name": "ao_proprietario",
+            "type": "u64"
+          },
+          {
+            "name": "ao_fundo",
+            "type": "u64"
+          },
+          {
+            "name": "a_caucao",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AtrasoCobrado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "periodo",
+            "type": "u8"
+          },
+          {
+            "name": "da_caucao",
+            "type": "u64"
+          },
+          {
+            "name": "do_fundo",
+            "type": "u64"
+          },
+          {
+            "name": "em_quarentena",
+            "type": "bool"
+          },
+          {
+            "name": "falta_ao_proprietario",
+            "type": "u64"
           }
         ]
       }
@@ -2175,6 +2906,22 @@
             "type": "pubkey"
           },
           {
+            "name": "paused",
+            "docs": [
+              "Pausa de emergência: bloqueia a entrada e a saída de dinheiro do fundo e",
+              "novos contratos. O pagamento de aluguel continua (08-RESPOSTA-A-GOLPE, passo 1)."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "pool_quarantine_secs",
+            "docs": [
+              "Quarentena do pagamento do fundo: o valor fica retido esse tempo antes de",
+              "ir ao proprietário, e o admin pode congelar ou cancelar (antifraude, camada 2)."
+            ],
+            "type": "i64"
+          },
+          {
             "name": "bump",
             "type": "u8"
           }
@@ -2248,6 +2995,57 @@
           {
             "name": "dispute_window_secs",
             "type": "i64"
+          },
+          {
+            "name": "pool_quarantine_secs",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ContratoEncerrado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "devolvido_a_inquilina",
+            "type": "u64"
+          },
+          {
+            "name": "rendimento",
+            "type": "u64"
+          },
+          {
+            "name": "rendimento_devido",
+            "docs": [
+              "Rendimento devido pela conta. Se for maior que o pago, a reserva acabou (B-A20)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "calote",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ImobiliariaAtualizada",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "agency",
+            "type": "pubkey"
+          },
+          {
+            "name": "ativa",
+            "type": "bool"
           }
         ]
       }
@@ -2381,6 +3179,27 @@
             "type": "u64"
           },
           {
+            "name": "pool_pending",
+            "docs": [
+              "Pagamento do fundo ao proprietário retido em quarentena (ainda no cofre do fundo)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "pool_release_ts",
+            "docs": [
+              "A partir de quando o pagamento em quarentena pode ser liberado."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "pool_frozen",
+            "docs": [
+              "Congelado pelo admin enquanto investiga suspeita de golpe."
+            ],
+            "type": "bool"
+          },
+          {
             "name": "pool_covered_total",
             "docs": [
               "Total já pago pelo pool a este contrato (limitado a `coverage_cap`)."
@@ -2491,6 +3310,54 @@
       }
     },
     {
+      "name": "PagamentoDoFundoCancelado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "valor",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PagamentoDoFundoCongelado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "congelado",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PagamentoDoFundoLiberado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "valor",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "PeriodState",
       "docs": [
         "Estado de cada período. Impede cobrar o mesmo mês duas vezes e impede",
@@ -2584,6 +3451,18 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProtocoloPausado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pausado",
+            "type": "bool"
           }
         ]
       }

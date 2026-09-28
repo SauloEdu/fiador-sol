@@ -60,6 +60,7 @@ pub struct PoolDeposit<'info> {
 
 pub fn handle_pool_deposit(ctx: Context<PoolDeposit>, amount: u64) -> Result<()> {
     require!(amount > 0, FiadorError::InvalidAmount);
+    require!(!ctx.accounts.config.paused, FiadorError::ProtocolPaused);
     let pool = &ctx.accounts.pool;
     // Cotas pelo valor contábil do pool, arredondando contra quem deposita.
     let shares = (amount as u128)
@@ -135,6 +136,7 @@ pub struct PoolWithdraw<'info> {
 }
 
 pub fn handle_pool_withdraw(ctx: Context<PoolWithdraw>) -> Result<()> {
+    require!(!ctx.accounts.config.paused, FiadorError::ProtocolPaused);
     let now = Clock::get()?.unix_timestamp;
     let position = &ctx.accounts.position;
     let shares = position.pending_shares;

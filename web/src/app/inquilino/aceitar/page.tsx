@@ -137,7 +137,7 @@ function Aceitar() {
           <div style={{ marginTop: 10 }}><Valor v={caucao} t={40} inteiro /></div>
           <div style={{ marginTop: 10 }}>
             <Linha k="Guardada em" v={new Date().toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} />
-            <Linha k="Rende" v="10% ao ano (simulado)" />
+            <Linha k="Rende" v="simulado na demo; em produção, o da aplicação" />
             <Linha k="Primeiro aluguel" v={`vence em ${l.periodSecs} s`} />
           </div>
           <div style={{ display: "flex", justifyContent: "center", margin: "16px 0 24px" }}><Carimbo txt="LACRADA" cor={COR.tinta} t={28} rot={-6} animar /></div>

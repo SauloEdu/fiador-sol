@@ -2,6 +2,38 @@
 
 Da mais nova para a mais antiga. **Toda mudança no software ganha uma entrada aqui** (modelo no README). As entradas anteriores a 2026-09-24 foram reconstruídas a partir das conversas de construção.
 
+## 2026-09-28 · Resposta a golpe no programa, Central de risco e demo protegida
+- **Quem:** Claude Opus 5.5 (meta do Saulo: construir o app até ficar pronto, com commits e pushs autorizados)
+- **O quê:**
+  - **Programa, 5 instruções novas:** pausa de emergência, suspensão de imobiliária e quarentena do pagamento do fundo, com congelar, cancelar e liberar.
+  - **Programa, outras mudanças:** `initialize` preso a quem publicou o programa (B-A21); eventos nas movimentações principais (B-A38); rendimento com a mesma conta da tela e sem correr depois do prazo (B-A20).
+  - **Site:** Central de risco (`/risco`) e atalho "E se for golpe?" no Palco; senha da demo (`DEMO_TOKEN`) nas rotas que usam a chave do admin; recusa de chamadas de outros sites; a cobrança automática libera a quarentena e diz de onde saiu cada pagamento.
+  - **Textos:** limite de 50% por imobiliária na tela (B-A01); textos honestos sobre rendimento, dados e calote.
+- **Por quê:** itens 2, 4 e 5 do painel, prioridades 3 e 4 da banca (08, seção 6) e o que falta antes da devnet (06, seção 5).
+- **Arquivos:**
+  - programa: `programs/fiador/src/{lib.rs,events.rs,errors.rs,state/{config,lease}.rs,instructions/{emergency,initialize,claim_default,close_lease,create_lease,accept_lease,pool_ops,pay_rent,mod}.rs}`, `programs/fiador/tests/test_lease.rs`;
+  - site: `web/src/{lib/{api,server,historia,constants}.ts,components/{SenhaDemo.tsx,useDemo.ts,Pix.tsx,PixFluxo.tsx},app/{risco/**,api/{admin,keeper,estado,demo/preparar,pix/cobranca,pix/confirmar}/route.ts,apresentacao/{page.tsx,palco.module.css},imobiliaria/casca.tsx,inquilino/**,page.tsx}}`, `web/scripts/{setup-demo,e2e}.ts`, `web/src/idl/*`;
+  - `scripts/demo-local.sh`, `CLAUDE.md`, `web/README.md`;
+  - Fiador Doc: 00, 01, 02, 04, 05 (D-17, D-18), 06, 08.
+- **Verificação:**
+  - `cargo test` 66/66, sem aviso de pilha;
+  - `tsc` sem erros;
+  - Solana local com `--upgradeable-program`: o `setup` achou a autoridade sozinho, e o `e2e.ts` passou;
+  - atualização do programa em vigor com `solana program deploy --upgrade-authority` (sem apagar a rede);
+  - no navegador: Central de risco pausou, retomou, suspendeu e reativou a imobiliária, e cada ação apareceu com o link do registro na Solana.
+- **Checklist de segurança:**
+  - instruções de admin com `has_one = admin`;
+  - a liberação (`release`) é pública, mas só depois do prazo e sem congelamento;
+  - o dinheiro em quarentena nunca sai do cofre do fundo;
+  - o layout de `Config` e `Lease` mudou (nova inicialização em redes já existentes);
+  - a senha da demo nunca vai ao código do navegador (só `localStorage` de quem apresenta).
+- **Pendências:**
+  - contestação por investidores;
+  - `set_admin` em duas etapas;
+  - eventos em aporte e saque;
+  - estado `emitindo` no Pix (B-A19);
+  - publicar na devnet.
+
 ## 2026-09-28 · Antifraude no programa: cobertura crescente e franquia
 - **Quem:** Claude Opus 5.5
 - **O quê:** primeira camada antifraude contra o golpe do conluio (B-A24; 06, seção 8.1). O fundo cobre ¼ de aluguel a cada aluguel pago, até 3 aluguéis, e paga 80% do que faltar. A franquia de 20% fica como dívida da inquilina com o proprietário (`landlord_debt`), paga primeiro na quitação. As telas passaram a mostrar a cobertura liberada até agora.

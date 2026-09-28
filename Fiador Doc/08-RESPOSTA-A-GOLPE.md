@@ -35,7 +35,7 @@ O resumo da seção 8 do [06](06-CONSELHO-SEGURANCA.md). Nenhuma camada resolve 
 | | Garantia da imobiliária, que perde primeiro | G1, G2, G5 | ❌ | antes de dinheiro real |
 | | Espera de 2 aluguéis antes do fundo entrar | G1 | ✅ `coverage_waiting_periods` | já existe |
 | | Limite de 50% do fundo por imobiliária e teto por contrato | G1 em série | ✅ `agency_max_pool_bps`, `max_coverage_amount` | já existe |
-| 2. Ganhar tempo | Pagamento do fundo em quarentena, com contestação dos investidores | G1, G2 | ❌ | hackathon ou devnet |
+| 2. Ganhar tempo | Pagamento do fundo em quarentena (30 s na demo; 7 dias sugeridos em produção); a equipe congela ou cancela | G1, G2 | ✅ desde 28/09 (contestação por investidores ainda não) | feito em parte |
 | | Fundo paga conforme o despejo anda (notificação, ação, liminar) | G1, G2 | ❌ | antes de dinheiro real |
 | 3. Perceber pelos rastros | Alerta de calote logo depois da espera | G1 | ❌ | devnet |
 | | Grafo de carteiras, preço do aluguel por CEP, vistoria, DataJud | G1, G2 | ❌ | produção |
@@ -72,13 +72,13 @@ Objetivo: o dinheiro para de sair.
 
 | Ação | Hoje (demo) | Alvo (produção) |
 |---|---|---|
-| Segurar o pagamento do fundo do contrato suspeito | ❌ Não existe. O `claim_default` pode ser chamado por qualquer pessoa. | O pagamento está em quarentena: o admin (multisig) ou a contestação de um investidor congela o valor. |
-| Impedir novos contratos da imobiliária suspeita | ❌ Não existe descredenciamento (B-A14). | `suspend_agency`: bloqueia `create_lease` e o novo uso do fundo; os contratos honestos em andamento continuam. |
-| Parar tudo, se for ataque ao sistema (G8) | ❌ Não existe pausa (B-A14). | `pause`: bloqueia a entrada e a saída de dinheiro do fundo; o pagamento de aluguel continua. |
+| Segurar o pagamento do fundo do contrato suspeito | ✅ Quarentena: o pagamento do fundo fica retido e a equipe congela (`freeze_pool_payment`) na Central de risco (`/risco`). | O mesmo, com multisig; e contestação por investidores com garantia. |
+| Impedir novos contratos da imobiliária suspeita | ✅ `set_agency_active`: a imobiliária suspensa não cria contratos e seus convites não podem ser aceitos. | O mesmo, com multisig. |
+| Parar tudo, se for ataque ao sistema (G8) | ✅ `set_paused`: bloqueia contratos novos, aportes, saques e pagamentos do fundo; o aluguel continua. | O mesmo, com multisig. |
 | Colocar carteiras e CPFs na lista de observação | manual (planilha) | lista interna consultada na criação do contrato |
 | Parar o keeper, se ele estiver sendo usado no ataque | desligar o servidor | segredo do cron trocado |
 
-> **Por isso as instruções `pause`, `suspend_agency` e a quarentena estão no plano do hackathon e da devnet.** Sem elas, a resposta a um golpe hoje começa tarde demais: o dinheiro já saiu.
+> **Desde 28/09 o programa tem pausa, suspensão de imobiliária e quarentena.** Na demo, a Central de risco (`/risco`) executa o passo 1 ao vivo.
 
 ### Passo 2 · Preservar as provas (primeiras 24 horas)
 
@@ -154,9 +154,9 @@ Depois:
 |---|---|---|
 | Registro imutável de tudo (prova) | ✅ blockchain | — |
 | Espera de 2 aluguéis, teto por contrato e limite de 50% por imobiliária | ✅ no programa | — |
-| Eventos para monitorar (`emit!`) | ❌ | B-A38 |
-| Pausa e descredenciamento | ❌ | B-A14 |
-| Quarentena com contestação | ❌ | 06, seção 8.2 |
+| Eventos para monitorar (`emit!`) | ✅ em parte (aluguel, cobrança, encerramento, emergência) | B-A38 |
+| Pausa e descredenciamento | ✅ 28/09 | B-A14 (falta `set_admin`) |
+| Quarentena com contestação | ✅ quarentena com congelar/cancelar pela equipe; contestação por investidores ainda não | 06, seção 8.2 |
 | Cobertura crescente e franquia | ✅ 28/09 | 06, seção 8.1 |
 | Imobiliária ≠ proprietário, aluguel mínimo, mês máximo | ✅ 28/09 | B-A25 (em parte), B-A23 (em parte), B-A26 |
 | Alertas automáticos | ❌ | 06, seção 9.2 |
@@ -167,8 +167,8 @@ Depois:
 **Prioridade para a banca:**
 1. ~~Cobertura crescente + franquia~~ (feito em 28/09).
 2. ~~Imobiliária ≠ proprietário~~ (feito em 28/09).
-3. `pause` e `suspend_agency`.
-4. Uma quarentena simples.
+3. ~~`pause` e `suspend_agency`~~ (feito em 28/09).
+4. ~~Uma quarentena simples~~ (feito em 28/09; cena na Central de risco, `/risco`, aberta pelo Palco).
 
 Com esses quatro itens, dá para **mostrar na demo** o golpe sendo segurado: o Palco pode ter uma cena "e se for golpe?".
 
@@ -180,7 +180,7 @@ Com esses quatro itens, dá para **mostrar na demo** o golpe sendo segurado: o P
 | "E se o golpe passar mesmo assim?" | "A gente segura o pagamento, descredencia a imobiliária, leva o dossiê à polícia e cobra de quem deu o golpe. A blockchain é a prova: nada pode ser apagado." |
 | "Quem paga o prejuízo?" | "Nessa ordem: a caução, a garantia da imobiliária, a franquia do dono e só depois o fundo. E o fundo tem limite por contrato e por imobiliária." |
 | "Blockchain não é anônima?" | "A carteira é pública, mas a pessoa é identificada fora da blockchain, no cadastro com CPF. Ligar uma à outra é o que permite cobrar." |
-| "Vocês conseguem parar o sistema num ataque?" | "Hoje, na demo, ainda não; está no plano antes da devnet: pausa geral e suspensão por imobiliária, controladas por várias assinaturas (multisig)." Ser honesto aqui vale mais do que prometer. |
+| "Vocês conseguem parar o sistema num ataque?" | "Sim: o programa tem pausa geral, suspensão por imobiliária e quarentena do pagamento do fundo, que a equipe congela ou cancela. Na demo é uma chave da equipe; em produção, várias assinaturas (multisig)." Dá para mostrar ao vivo na Central de risco. |
 
 ## 8. "Então o dono e a imobiliária também perdem?"
 

@@ -31,6 +31,21 @@ fn pda(seeds: &[&[u8]]) -> Pubkey {
     Pubkey::find_program_address(seeds, &fiador::id()).0
 }
 
+/// Endereço dos dados do programa publicado (loader atualizável).
+fn program_data() -> Pubkey {
+    Pubkey::find_program_address(&[fiador::id().as_ref()], &anchor_lang::solana_program::bpf_loader_upgradeable::ID).0
+}
+
+/// Grava a autoridade de atualização nos dados do programa. Formato do cabeçalho:
+/// tipo (4 bytes, 3 = ProgramData) · slot (8) · Option<Pubkey> (1 + 32).
+fn definir_autoridade_de_atualizacao(svm: &mut LiteSVM, autoridade: &Pubkey) {
+    let endereco = program_data();
+    let mut conta = svm.get_account(&endereco).expect("dados do programa");
+    conta.data[12] = 1;
+    conta.data[13..45].copy_from_slice(autoridade.as_ref());
+    svm.set_account(endereco, conta).unwrap();
+}
+
 fn lease_pda(landlord: &Pubkey, tenant: &Pubkey, id: u64) -> Pubkey {
     pda(&[b"lease", landlord.as_ref(), tenant.as_ref(), &id.to_le_bytes()])
 }
@@ -56,6 +71,8 @@ fn demo_params() -> ConfigParams {
         agency_max_pool_bps: 5000,
         withdraw_cooldown_secs: 30,
         dispute_window_secs: 30,
+        // Sem quarentena nos testes antigos; os testes de resposta a golpe usam 30 s.
+        pool_quarantine_secs: 0,
     }
 }
 
@@ -83,6 +100,9 @@ impl Env {
 
         let [admin, agency, landlord, tenant, stranger, investor] =
             [(); 6].map(|_| Keypair::new());
+        // O LiteSVM publica o programa sem autoridade de atualização; aqui o admin
+        // passa a ser quem publicou (o `initialize` exige isso: B-A21).
+        definir_autoridade_de_atualizacao(&mut svm, &admin.pubkey());
         for k in [&admin, &agency, &landlord, &tenant, &stranger, &investor] {
             svm.airdrop(&k.pubkey(), 100_000_000_000).unwrap();
         }
@@ -167,6 +187,7 @@ impl Env {
                 pool_vault: pda(&[b"pool_vault"]),
                 yield_reserve: pda(&[b"yield_reserve"]),
                 admin_token: self.admin_token,
+                program_data: program_data(),
                 token_program: token_program(),
                 system_program: system_program::ID,
             }
@@ -1011,10 +1032,9 @@ fn caucao_volta_com_rendimento_e_reputacao_sobe() {
     let recebido = env.balance(&env.tenant_token) - antes;
 
     let l = env.lease(&lease);
-    let elapsed = (env.now() - l.start_ts) as u128;
-    let rendimento = (brl(6000) as u128 * 1000 * elapsed / (10_000 * SECONDS_PER_YEAR as u128)) as u64;
-    assert!(rendimento > 0);
-    assert_eq!(recebido, brl(6000) + rendimento);
+    // 10% ao ano, com 1 ano = 12 meses do contrato, contado só até o fim do prazo:
+    // 2 meses de 60 s = 1/6 de ano → R$ 6.000 × 10% / 6 = R$ 100 (B-A20).
+    assert_eq!(recebido, brl(6000) + brl(100));
     assert_eq!(l.status, LeaseStatus::Closed);
     assert_eq!(env.pool().locked_coverage, 0, "cobertura destravada");
     let agency: Agency = env.fetch(&pda(&[b"agency", env.agency.pubkey().as_ref()]));
@@ -1621,4 +1641,224 @@ fn config_recusa_franquia_de_100_por_cento_e_crescimento_zero() {
     assert_err(env.initialize(franquia, brl(1000)), "InvalidConfig");
     let zero = ConfigParams { coverage_growth_bps: 0, ..demo_params() };
     assert_err(env.initialize(zero, brl(1000)), "InvalidConfig");
+}
+
+
+// ======================= Resposta a golpe: pausa, suspensão e quarentena =======================
+
+impl Env {
+    fn set_paused(&mut self, signer: &Keypair, paused: bool) -> Result<(), FailedTransactionMetadata> {
+        let ix = Instruction::new_with_bytes(
+            fiador::id(),
+            &fiador::instruction::SetPaused { paused }.data(),
+            fiador::accounts::SetPaused { admin: signer.pubkey(), config: pda(&[b"config"]) }.to_account_metas(None),
+        );
+        self.send(ix, &[signer])
+    }
+
+    fn set_agency_active(&mut self, signer: &Keypair, authority: Pubkey, active: bool) -> Result<(), FailedTransactionMetadata> {
+        let ix = Instruction::new_with_bytes(
+            fiador::id(),
+            &fiador::instruction::SetAgencyActive { active }.data(),
+            fiador::accounts::SetAgencyActive {
+                admin: signer.pubkey(),
+                config: pda(&[b"config"]),
+                agency: pda(&[b"agency", authority.as_ref()]),
+            }
+            .to_account_metas(None),
+        );
+        self.send(ix, &[signer])
+    }
+
+    fn admin_pool_payment(&mut self, signer: &Keypair, lease: Pubkey, data: Vec<u8>) -> Result<(), FailedTransactionMetadata> {
+        let ix = Instruction::new_with_bytes(
+            fiador::id(),
+            &data,
+            fiador::accounts::AdminPoolPayment {
+                admin: signer.pubkey(),
+                config: pda(&[b"config"]),
+                pool: pda(&[b"pool"]),
+                lease,
+            }
+            .to_account_metas(None),
+        );
+        self.send(ix, &[signer])
+    }
+
+    fn freeze(&mut self, signer: &Keypair, lease: Pubkey, frozen: bool) -> Result<(), FailedTransactionMetadata> {
+        self.admin_pool_payment(signer, lease, fiador::instruction::FreezePoolPayment { frozen }.data())
+    }
+
+    fn cancel(&mut self, signer: &Keypair, lease: Pubkey) -> Result<(), FailedTransactionMetadata> {
+        self.admin_pool_payment(signer, lease, fiador::instruction::CancelPoolPayment {}.data())
+    }
+
+    fn release(&mut self, lease: Pubkey) -> Result<(), FailedTransactionMetadata> {
+        let caller = self.stranger.insecure_clone();
+        let ix = Instruction::new_with_bytes(
+            fiador::id(),
+            &fiador::instruction::ReleasePoolPayment {}.data(),
+            fiador::accounts::ReleasePoolPayment {
+                caller: caller.pubkey(),
+                config: pda(&[b"config"]),
+                pool: pda(&[b"pool"]),
+                pool_vault: pda(&[b"pool_vault"]),
+                lease,
+                mint: self.mint,
+                landlord_token: self.landlord_token,
+                token_program: token_program(),
+            }
+            .to_account_metas(None),
+        );
+        self.send(ix, &[&caller])
+    }
+}
+
+/// Cobertura cheia, sem franquia e com 30 s de quarentena: isola a regra da quarentena.
+fn regras_quarentena() -> ConfigParams {
+    ConfigParams { pool_quarantine_secs: 30, ..demo_params() }
+}
+
+#[test]
+fn so_o_admin_pausa_e_suspende() {
+    let mut env = Env::ready();
+    let (stranger, agency) = (env.stranger.insecure_clone(), env.agency.pubkey());
+    assert_err(env.set_paused(&stranger, true), "ConstraintHasOne");
+    assert_err(env.set_agency_active(&stranger, agency, false), "ConstraintHasOne");
+}
+
+#[test]
+fn pausa_bloqueia_contratos_e_fundo_mas_o_aluguel_continua() {
+    let (mut env, lease) = contrato_ativo(12);
+    let admin = env.admin.insecure_clone();
+    env.open_position().unwrap();
+    env.set_paused(&admin, true).unwrap();
+
+    let (agency, landlord, tenant) =
+        (env.agency.insecure_clone(), env.landlord.insecure_clone(), env.tenant.pubkey());
+    assert_err(env.create_lease(&agency, &landlord, tenant, 2, terms(2000)), "ProtocolPaused");
+    assert_err(env.pool_deposit(brl(1000)), "ProtocolPaused");
+    env.pay_rent(lease).unwrap(); // a inquilina continua pagando
+    env.pay_rent(lease).unwrap();
+
+    // Caução esgotada: com a pausa, o fundo não paga; o que falta fica com o proprietário.
+    for mes in 2..6 {
+        depois_da_carencia(&mut env, &lease, mes);
+        env.claim_default(lease).unwrap();
+    }
+    let l = env.lease(&lease);
+    assert_eq!(l.pool_covered_total, 0);
+    assert_eq!(l.landlord_debt, brl(2000));
+
+    env.set_paused(&admin, false).unwrap();
+    env.pool_deposit(brl(1000)).unwrap();
+}
+
+#[test]
+fn imobiliaria_suspensa_nao_cria_contrato_nem_convite_e_aceito() {
+    let mut env = Env::ready();
+    let (admin, agency, landlord, tenant) = (
+        env.admin.insecure_clone(),
+        env.agency.insecure_clone(),
+        env.landlord.insecure_clone(),
+        env.tenant.insecure_clone(),
+    );
+    env.create_lease(&agency, &landlord, tenant.pubkey(), 1, terms(2000)).unwrap();
+    env.init_profile(&tenant).unwrap();
+    env.set_agency_active(&admin, agency.pubkey(), false).unwrap();
+
+    assert_err(env.create_lease(&agency, &landlord, tenant.pubkey(), 2, terms(2000)), "AgencyInactive");
+    let lease = lease_pda(&landlord.pubkey(), &tenant.pubkey(), 1);
+    let token = env.tenant_token;
+    assert_err(env.accept_lease(&tenant, token, lease), "AgencyInactive");
+
+    env.set_agency_active(&admin, agency.pubkey(), true).unwrap();
+    env.accept_lease(&tenant, token, lease).unwrap();
+}
+
+#[test]
+fn pagamento_do_fundo_fica_em_quarentena_e_depois_vai_ao_proprietario() {
+    let (mut env, lease) = contrato_ativo_com(env_com(regras_quarentena()), 12);
+    paga_e_esgota_a_caucao(&mut env, &lease, 2);
+    let antes = env.balance(&env.landlord_token);
+    depois_da_carencia(&mut env, &lease, 5);
+    env.claim_default(lease).unwrap();
+    let l = env.lease(&lease);
+    assert_eq!(l.pool_pending, brl(2000));
+    assert_eq!(env.balance(&env.landlord_token), antes, "ainda não saiu do cofre do fundo");
+
+    assert_err(env.release(lease), "QuarantineActive");
+    env.warp(30);
+    env.release(lease).unwrap();
+    assert_eq!(env.balance(&env.landlord_token) - antes, brl(2000));
+    assert_eq!(env.lease(&lease).pool_pending, 0);
+    assert_err(env.release(lease), "NothingPending");
+}
+
+#[test]
+fn golpe_confirmado_congela_e_cancela_o_pagamento_do_fundo() {
+    let (mut env, lease) = contrato_ativo_com(env_com(regras_quarentena()), 12);
+    let (admin, stranger) = (env.admin.insecure_clone(), env.stranger.insecure_clone());
+    paga_e_esgota_a_caucao(&mut env, &lease, 2);
+    let antes = env.balance(&env.landlord_token);
+    depois_da_carencia(&mut env, &lease, 5);
+    env.claim_default(lease).unwrap();
+    let ativos_depois_da_cobranca = env.pool().total_assets;
+
+    assert_err(env.freeze(&stranger, lease, true), "ConstraintHasOne");
+    env.freeze(&admin, lease, true).unwrap();
+    env.warp(60);
+    assert_err(env.release(lease), "PoolPaymentFrozen");
+
+    env.cancel(&admin, lease).unwrap();
+    let l = env.lease(&lease);
+    assert_eq!(l.pool_pending, 0);
+    assert_eq!(l.pool_debt, 0, "a inquilina deixa de dever ao fundo o que o fundo não pagou");
+    assert_eq!(env.pool().total_assets - ativos_depois_da_cobranca, brl(2000), "o dinheiro volta aos investidores");
+    assert_eq!(env.balance(&env.landlord_token), antes, "o proprietário não recebe");
+    assert!(env.balance(&pda(&[b"pool_vault"])) >= env.pool().total_assets, "I1");
+}
+
+#[test]
+fn nao_fecha_contrato_com_pagamento_do_fundo_em_quarentena() {
+    let (mut env, lease) = contrato_ativo_com(env_com(regras_quarentena()), 6);
+    paga_e_esgota_a_caucao(&mut env, &lease, 2);
+    depois_da_carencia(&mut env, &lease, 5);
+    env.claim_default(lease).unwrap();
+    env.end_lease(lease).unwrap();
+    assert_err(env.close_lease(lease), "DisputeWindowOpen");
+    env.warp(31);
+    let l = env.lease(&lease);
+    assert!(l.pool_pending > 0);
+    assert_err(env.close_lease(lease), "PoolPaymentPending");
+    env.release(lease).unwrap();
+    env.close_lease(lease).unwrap();
+    assert_eq!(env.lease(&lease).status, LeaseStatus::Closed);
+}
+
+
+#[test]
+fn so_quem_publicou_o_programa_inicializa() {
+    // Regressão B-A21: um estranho chegando primeiro não vira admin.
+    let mut env = Env::new();
+    let (stranger, mint, token) = (env.stranger.insecure_clone(), env.mint, env.stranger_token);
+    let ix = Instruction::new_with_bytes(
+        fiador::id(),
+        &fiador::instruction::Initialize { params: demo_params(), initial_pool_deposit: brl(1000) }.data(),
+        fiador::accounts::Initialize {
+            admin: stranger.pubkey(),
+            config: pda(&[b"config"]),
+            pool: pda(&[b"pool"]),
+            mint,
+            pool_vault: pda(&[b"pool_vault"]),
+            yield_reserve: pda(&[b"yield_reserve"]),
+            admin_token: token,
+            program_data: program_data(),
+            token_program: token_program(),
+            system_program: system_program::ID,
+        }
+        .to_account_metas(None),
+    );
+    assert_err(env.send(ix, &[&stranger]), "NotUpgradeAuthority");
+    env.initialize(demo_params(), brl(1000)).unwrap();
 }

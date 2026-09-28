@@ -106,6 +106,7 @@ async function main() {
       agencyMaxPoolBps: 5000,
       withdrawCooldownSecs: new BN(30),
       disputeWindowSecs: new BN(30),
+      poolQuarantineSecs: new BN(30), // pagamento do fundo retido 30 s na demo (7 dias em produção)
     };
     await program.methods
       .initialize(params, brl(50_000))

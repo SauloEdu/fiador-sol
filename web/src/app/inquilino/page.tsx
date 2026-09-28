@@ -156,7 +156,7 @@ export default function Inicio() {
           <span style={{ flex: 1, display: "flex", flexDirection: "column", gap: 3 }}>
             <span style={{ fontSize: 14, fontWeight: 650, color: COR.graf }}>Caução no cofre do contrato</span>
             <Valor v={x.cofre} t={26} oculto={oculto} />
-            <span style={{ fontSize: 13, color: COR.graf }}>com rendimento simulado de 10% ao ano</span>
+            <span style={{ fontSize: 13, color: COR.graf }}>com rendimento simulado (em produção, o de uma aplicação real)</span>
           </span>
           <Icone n="avancar" t={20} cor={COR.caneta} e={2.2} />
         </Link>

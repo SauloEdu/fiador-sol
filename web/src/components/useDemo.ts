@@ -6,9 +6,10 @@ import BN from "bn.js";
 import { Connection, Keypair, PublicKey, SYSVAR_CLOCK_PUBKEY } from "@solana/web3.js";
 import { RPC_URL } from "@/lib/constants";
 import { getProgram } from "@/lib/program";
-import { agencyPda, leasePda, poolPda, positionPda, profilePda } from "@/lib/pdas";
+import { agencyPda, configPda, leasePda, poolPda, positionPda, profilePda } from "@/lib/pdas";
 import * as A from "@/lib/actions";
 import { Mes } from "@/lib/historia";
+import { apiPost } from "@/lib/api";
 
 if (typeof window !== "undefined") {
   (window as unknown as { Buffer: typeof Buffer }).Buffer ??= Buffer;
@@ -61,6 +62,9 @@ export type LeaseView = {
   coverageGrowthBps: number;
   landlordDeductibleBps: number;
   landlordDebt: number;
+  poolPending: number;
+  poolReleaseTs: number;
+  poolFrozen: boolean;
   periods: EstadoPeriodo[];
   paidOnTime: number;
   paidLate: number;
@@ -69,6 +73,7 @@ export type LeaseView = {
   disputeAmount: number;
   disputeResolved: boolean;
   premiumBps: number;
+  apyBps: number;
 };
 
 export type Snapshot = {
@@ -80,10 +85,15 @@ export type Snapshot = {
   position: { shares: number; pending: number; requestTs: number } | null;
   bal: Record<Papel, number>;
   badges: number;
+  /** Pausa de emergência do protocolo e situação da imobiliária da demo. */
+  pausado: boolean;
+  imobiliariaAtiva: boolean;
+  /** A demo publicada pede senha nas rotas do servidor (DEMO_TOKEN). */
+  protegida: boolean;
 };
 
 /** `kind` e `periodo` deixam as telas montarem extrato e comprovantes a partir dos eventos. */
-export type TipoEvento = "contrato" | "caucao" | "aluguel" | "quitacao" | "cobranca" | "encerrou" | "acerto" | "danos" | "decisao" | "pix" | "aporte" | "resgate";
+export type TipoEvento = "contrato" | "caucao" | "aluguel" | "quitacao" | "cobranca" | "encerrou" | "acerto" | "danos" | "decisao" | "pix" | "aporte" | "resgate" | "risco";
 export type Evento = {
   id: string; t: number; quem: string; texto: string; tipo: "ok" | "erro" | "info"; sig?: string;
   kind?: TipoEvento; periodo?: number; valor?: number; leaseId?: number;
@@ -106,6 +116,7 @@ export function useDemo() {
   const vistos = useRef(new Set<string>());
   const canal = useRef<BroadcastChannel | null>(null);
   const preparadoNestaSessao = useRef(false);
+  const protegidaRef = useRef(false);
 
   const kp = useMemo(() => {
     if (!salvo) return null;
@@ -175,6 +186,7 @@ export function useDemo() {
       try {
         const r = await fetch("/api/estado").then((x) => x.json());
         if (r.erro) throw new Error(r.erro);
+        protegidaRef.current = !!r.protegida;
         setAddrs({ mint: new PublicKey(r.mint), badgeMint: new PublicKey(r.badgeMint) });
         // Sempre reconfere: a rede de teste pode ter sido reiniciada (a preparação é idempotente).
         if (!preparadoNestaSessao.current) {
@@ -183,9 +195,7 @@ export function useDemo() {
           const body = Object.fromEntries(
             PAPEIS.map((p) => [p, Keypair.fromSecretKey(Uint8Array.from(salvo.wallets[p])).publicKey.toBase58()])
           );
-          const p = await fetch("/api/demo/preparar", { method: "POST", body: JSON.stringify(body) }).then((x) =>
-            x.json()
-          );
+          const p = await apiPost("/api/demo/preparar", body);
           if (p.erro) throw new Error(p.erro);
           if (!salvo.preparado) {
             setSalvo({ ...salvo, preparado: true });
@@ -204,8 +214,10 @@ export function useDemo() {
   const atualizar = useCallback(async () => {
     if (!kp || !addrs || !lease) return;
     const program = getProgram(connection, { publicKey: kp.inquilino.publicKey });
-    const [clock, l, pool, profile, position, ...bals] = await Promise.all([
+    const [clock, config, agencia, l, pool, profile, position, ...bals] = await Promise.all([
       connection.getAccountInfo(SYSVAR_CLOCK_PUBKEY),
+      program.account.config.fetch(configPda()),
+      program.account.agency.fetchNullable(agencyPda(kp.imobiliaria.publicKey)),
       program.account.lease.fetchNullable(lease),
       program.account.pool.fetch(poolPda()),
       program.account.tenantProfile.fetchNullable(profilePda(kp.inquilino.publicKey)),
@@ -234,6 +246,9 @@ export function useDemo() {
             coverageGrowthBps: l.coverageGrowthBps,
             landlordDeductibleBps: l.landlordDeductibleBps,
             landlordDebt: n(l.landlordDebt),
+            poolPending: n(l.poolPending),
+            poolReleaseTs: n(l.poolReleaseTs),
+            poolFrozen: l.poolFrozen,
             periods: l.periods.slice(0, l.totalPeriods).map((p) => key(p) as EstadoPeriodo),
             paidOnTime: l.paidOnTime,
             paidLate: l.paidLate,
@@ -242,6 +257,7 @@ export function useDemo() {
             disputeAmount: n(l.disputeAmount),
             disputeResolved: l.disputeResolved,
             premiumBps: l.premiumBps,
+            apyBps: l.apyBps,
           }
         : null,
       pool: {
@@ -264,6 +280,9 @@ export function useDemo() {
         : null,
       bal: Object.fromEntries(PAPEIS.map((p, i) => [p, bals[i] as number])) as Record<Papel, number>,
       badges,
+      pausado: config.paused,
+      imobiliariaAtiva: agencia ? agencia.active : true,
+      protegida: protegidaRef.current,
     });
   }, [kp, addrs, lease, connection]);
 
@@ -280,18 +299,30 @@ export function useDemo() {
     const alvo = lease.toBase58();
     const rodar = async () => {
       try {
-        const r = await fetch("/api/keeper", { method: "POST" }).then((x) => x.json());
+        const r = await apiPost<{ feitas?: { contrato: string; acao: string; mes?: number; assinatura: string; caucao?: number; fundo?: number; quarentena?: boolean; valor?: number }[] }>("/api/keeper");
         for (const f of r.feitas ?? []) {
           if (f.contrato !== alvo) continue;
+          const reaisDe = (u?: number) => (u ?? 0) / 1_000_000;
+          const cobranca = () => {
+            const mes = Mes(f.mes! - 1);
+            if ((f.fundo ?? 0) > 0)
+              return f.quarentena
+                ? `${mes} passou da carência e a caução já tinha acabado. O fundo cobriu R$ ${reaisDe(f.fundo).toLocaleString("pt-BR")}, que ficam em quarentena antes de ir ao Carlos.`
+                : `${mes} passou da carência e a caução já tinha acabado. O fundo pagou o Carlos.`;
+            if ((f.caucao ?? 0) > 0) return `${mes} passou da carência sem pagamento. A cobrança automática pagou o Carlos com a caução.`;
+            return `${mes} passou da carência sem cobertura: fica como dívida da Ana com o Carlos.`;
+          };
           const texto =
             f.acao === "cobrou_atraso"
-              ? `${Mes(f.mes! - 1)} passou da carência sem pagamento. A cobrança automática pagou o Carlos com a caução.`
+              ? cobranca()
+              : f.acao === "liberou_fundo"
+                ? `Fim da quarentena: o fundo pagou R$ ${reaisDe(f.valor).toLocaleString("pt-BR")} ao Carlos.`
               : f.acao === "encerrou_prazo"
                 ? "O prazo do contrato terminou. Abriu a janela para o Carlos registrar danos."
                 : "Acerto final: a caução voltou para a Ana com o rendimento, e a proteção do fundo foi liberada.";
           registrar({
             quem: "Cobrança automática", tipo: "ok", texto, sig: f.assinatura, leaseId: salvo?.leaseId,
-            kind: f.acao === "cobrou_atraso" ? "cobranca" : f.acao === "encerrou_prazo" ? "encerrou" : "acerto",
+            kind: f.acao === "cobrou_atraso" || f.acao === "liberou_fundo" ? "cobranca" : f.acao === "encerrou_prazo" ? "encerrou" : "acerto",
             periodo: f.mes ? f.mes - 1 : undefined,
           });
         }

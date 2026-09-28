@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { PublicKey } from "@solana/web3.js";
 import { Botao, Cartao, COR, Icone, Linha, Nota, Txt, Valor } from "@/ui";
+import { apiPost } from "@/lib/api";
 
 type Cobranca = { id: string; valor: number; copiaECola: string };
 
@@ -49,8 +50,7 @@ export function PixFluxo({ carteira, valor, linhas, onPago, onCancelar }: {
 
   useEffect(() => {
     let vivo = true;
-    fetch("/api/pix/cobranca", { method: "POST", body: JSON.stringify({ carteira: carteira.toBase58(), valor }) })
-      .then((r) => r.json())
+    apiPost("/api/pix/cobranca", { carteira: carteira.toBase58(), valor })
       .then((r) => { if (vivo) (r.erro ? setErro(r.erro) : setCob(r)); })
       .catch(() => vivo && setErro("Não consegui gerar o Pix. Tente de novo."));
     const t = setInterval(() => tick((x) => x + 1), 1000);
@@ -72,9 +72,8 @@ export function PixFluxo({ carteira, valor, linhas, onPago, onCancelar }: {
     if (!cob) return;
     setConfirmando(true);
     setErro(null);
-    const r = await fetch("/api/pix/confirmar", { method: "POST", body: JSON.stringify({ id: cob.id }) })
-      .then((x) => x.json())
-      .catch(() => ({ erro: "Sem resposta do servidor" }));
+    const r = await apiPost("/api/pix/confirmar", { id: cob.id })
+      .catch((e: Error) => ({ erro: e.message || "Sem resposta do servidor" }));
     setConfirmando(false);
     if (r.erro) return setErro(r.erro);
     onPago(r.assinatura);

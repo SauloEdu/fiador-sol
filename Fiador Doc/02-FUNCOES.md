@@ -153,3 +153,40 @@ Erros (mensagens em português) em `src/errors.rs`. Os 46 testes em `tests/test_
 - **`Lease`:** copia os dois campos na criação; funções `coverage_available()` e `after_deductible(valor)`.
 - **Site:** `coberturaDoFundo(l)` e `partDoFundo(l)` em `historia.ts` (mesma conta do programa); `LeaseView` ganhou `coverageWaitingPeriods`, `coverageGrowthBps`, `landlordDeductibleBps` e `landlordDebt`. As telas do proprietário, da imobiliária, o Palco e o console mostram a cobertura **liberada até agora**, não o teto.
 - **Testes:** `cobertura_do_fundo_cresce_com_os_meses_pagos`, `franquia_do_proprietario_e_paga_primeiro_na_quitacao`, `cobertura_cheia_so_depois_de_12_meses_pagos`, `config_recusa_franquia_de_100_por_cento_e_crescimento_zero`. Total: 59.
+
+## Resposta a golpe, `initialize` protegido e senha da demo (2026-09-28, terceiro lote)
+
+**Instruções novas** (`programs/fiador/src/instructions/emergency.rs`):
+
+| Instrução | Quem assina | O que faz | Regras |
+|---|---|---|---|
+| `set_paused(paused)` | admin | Pausa ou retoma o protocolo. | Pausado: `create_lease`, `accept_lease`, `pool_deposit`, `pool_withdraw` e `release_pool_payment` recusam (`ProtocolPaused`); o `claim_default` só usa a caução (o fundo paga 0 e a diferença vira `landlord_debt`); `pay_rent` continua. |
+| `set_agency_active(active)` | admin | Suspende ou reativa uma imobiliária. | Suspensa: não cria contratos e seus convites não são aceitos (`AgencyInactive`); contratos em andamento continuam. |
+| `freeze_pool_payment(frozen)` | admin | Congela ou descongela o pagamento do fundo em quarentena. | Só com valor em quarentena (`NothingPending`). |
+| `cancel_pool_payment()` | admin | Golpe confirmado: o valor em quarentena volta ao patrimônio do fundo; a inquilina deixa de dever esse valor ao fundo; o proprietário não recebe; a cobertura do contrato continua consumida. | Só com valor em quarentena. |
+| `release_pool_payment()` | qualquer um (o keeper) | Paga ao proprietário o valor em quarentena. | Depois de `pool_release_ts` (`QuarantineActive`), não congelado (`PoolPaymentFrozen`), protocolo não pausado. |
+
+**Mudanças em instruções existentes:**
+- `initialize`: nova conta `program_data` (dados do programa no loader atualizável); exige que a autoridade de atualização seja quem assina (`NotUpgradeAuthority`, B-A21).
+- `claim_default`: com `pool_quarantine_secs > 0`, o valor do fundo não sai na hora; fica em `pool_pending` até `pool_release_ts`. Com o protocolo pausado, o fundo não paga.
+- `close_lease`: recusa enquanto houver pagamento do fundo em quarentena (`PoolPaymentPending`); rendimento com 1 ano = 12 meses do contrato, só até o fim do prazo (B-A20).
+- **Contas:**
+  - `Config` ganhou `paused` e `pool_quarantine_secs` (`ConfigParams.pool_quarantine_secs`, até 30 dias);
+  - `Lease` ganhou `pool_pending`, `pool_release_ts` e `pool_frozen`.
+- **Eventos** (`src/events.rs`, B-A38): `AluguelPago`, `AtrasoCobrado`, `PagamentoDoFundoLiberado`, `PagamentoDoFundoCongelado`, `PagamentoDoFundoCancelado`, `ProtocoloPausado`, `ImobiliariaAtualizada`, `ContratoEncerrado` (com rendimento pago e devido).
+- **Erros novos:** `ProtocolPaused`, `PoolPaymentPending`, `PoolPaymentFrozen`, `QuarantineActive`, `NothingPending`, `NotUpgradeAuthority`.
+
+**Servidor e site:**
+- `web/src/lib/server.ts`: `exigirSenha(req)` (`DEMO_TOKEN` + recusa de `Sec-Fetch-Site: cross-site`) e `demoProtegida()`; aplicada em `demo/preparar`, `pix/cobranca`, `pix/confirmar`, `keeper` e `admin`.
+- `POST /api/admin` (`api/admin/route.ts`): `pausar`, `retomar`, `suspender`, `reativar`, `congelar`, `descongelar`, `cancelar`, assinados pelo admin.
+- `POST /api/keeper`: também libera pagamentos do fundo com a quarentena vencida (`liberou_fundo`) e informa de onde saiu cada cobrança (`caucao`, `fundo`, `quarentena`). Não fecha contrato com valor em quarentena.
+- `GET /api/estado`: informa `protegida`.
+- `web/src/lib/api.ts`: `apiPost(url, corpo)` com o cabeçalho `x-demo-token`, mais `lerSenha` e `salvarSenha`. Todas as chamadas do navegador às rotas do admin passam por ele.
+- `web/src/components/SenhaDemo.tsx`: campo da senha de apresentação (aparece só se a demo pedir senha).
+- Tela nova `/risco` (**Central de risco**): pausa, imobiliária, pagamento do fundo em quarentena (congelar, descongelar, cancelar) e registro das ações. O Palco ganhou o atalho "E se for golpe?", o campo da senha e o aviso de protocolo pausado.
+- `useDemo`: o retrato ganhou `pausado`, `imobiliariaAtiva` e `protegida`; `LeaseView` ganhou `poolPending`, `poolReleaseTs`, `poolFrozen` e `apyBps`; o tipo de evento ganhou `risco`.
+- `historia.rendimento(l, agora)`: mesma conta do programa.
+- Barra lateral da imobiliária: limite de metade do fundo (B-A01).
+- Textos corrigidos: rendimento sem taxa prometida; "Nome e CPF fora da blockchain"; definição de calote; o que volta da caução.
+- `scripts/demo-local.sh`: sobe a Solana local com `--upgradeable-program … ~/.config/solana/id.json`.
+- **Testes:** 66, com 7 novos: `so_o_admin_pausa_e_suspende`, `pausa_bloqueia_contratos_e_fundo_mas_o_aluguel_continua`, `imobiliaria_suspensa_nao_cria_contrato_nem_convite_e_aceito`, `pagamento_do_fundo_fica_em_quarentena_e_depois_vai_ao_proprietario`, `golpe_confirmado_congela_e_cancela_o_pagamento_do_fundo`, `nao_fecha_contrato_com_pagamento_do_fundo_em_quarentena`, `so_quem_publicou_o_programa_inicializa`. O ambiente de teste grava a autoridade de atualização nos dados do programa (`definir_autoridade_de_atualizacao`).

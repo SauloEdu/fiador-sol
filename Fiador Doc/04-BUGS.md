@@ -4,13 +4,6 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 
 ## Abertos
 
-### B-A01 · As telas não mostram o limite de 50% do fundo por imobiliária
-- **Status:** aberto (encontrado em 2026-09-24)
-- **Sintoma:** o painel da imobiliária mostra quanto de proteção ela reservou, mas não mostra o limite. No canvas de design o limite foi retirado das telas.
-- **Causa:** erro de documentação (ver B-012). O limite existe no programa: `agency_max_pool_bps = 5000`, conferido em `accept_lease`.
-- **Correção sugerida:** na barra lateral de `web/src/app/imobiliaria/casca.tsx`, mostrar "R$ X de R$ Y (metade do fundo)", com Y = `pool.totalAssets × 50%`, e voltar a linha nas Configurações do canvas.
-- **Como testar:** criar um contrato e conferir que o limite aparece e bate com o fundo.
-
 ### B-A02 · Não há prazo para a imobiliária decidir os danos
 - **Status:** aberto
 - **Sintoma:** depois que o proprietário pede danos, a caução fica parada até a imobiliária decidir, sem data limite.
@@ -54,7 +47,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 > **B-A08 a B-A20** saíram da primeira revisão de brechas (2026-09-24). **B-A21 a B-A41** saíram do conselho de segurança do mesmo dia, com 10 especialistas. O relatório completo, com os temas jurídicos e econômicos, está em [06-CONSELHO-SEGURANCA.md](06-CONSELHO-SEGURANCA.md). As provas de conceito ficam em `provas/`: são testes que **passam hoje**, ou seja, a brecha existe. Siglas dos especialistas: RTO, RTF, CISO, SC, PIX, ATU, REG, LGPD, PLD, SRE.
 
 ### B-A08 · Qualquer pessoa vira imobiliária credenciada pela rota de preparação 🔴
-- **Status:** aberto (2026-09-24) · confirmado pelo conselho (RTF, CISO, PLD)
+- **Status:** **corrigido em parte em 2026-09-28**: `DEMO_TOKEN` exigido em `preparar`, `pix/*`, `keeper` e `admin` quando definido no servidor (`exigirSenha` em `web/src/lib/server.ts`); a senha fica só no navegador do apresentador (`SenhaDemo`). **Falta:** KYB e contrato de credenciamento em produção; limite de SOL por visitante na devnet. Antes: aberto (2026-09-24) · confirmado pelo conselho (RTF, CISO, PLD)
 - **Sintoma:** um `POST /api/demo/preparar` com qualquer carteira no campo `imobiliaria` faz o admin assinar `register_agency` para ela. Na devnet, a rota também transfere 0,05 SOL do admin para cada carteira nova. Basta **abrir a página inicial** para disparar a rota: cada navegador novo gera 4 carteiras e custa cerca de 0,21 SOL ao admin (RTF-3).
 - **Causa:** a rota não tem autenticação nem lista de carteiras permitidas (`web/src/app/api/demo/preparar/route.ts:16-39`; `web/src/components/useDemo.ts:176-185`).
 - **Correção:**
@@ -83,7 +76,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Como testar:** contrato A em `defaulted`; o aceite do contrato B deve exigir 3 aluguéis.
 
 ### B-A14 · Não há como descredenciar imobiliária, pausar ou trocar o admin 🟠 (🔴 em produção)
-- **Status:** aberto · confirmado (CISO, SRE, PLD)
+- **Status:** **corrigido em parte em 2026-09-28**: `set_paused` (pausa de emergência na Config) e `set_agency_active` (suspender/reativar imobiliária), com testes e tela `/risco`. **Falta:** `set_admin` em duas etapas e congelamento por ordem judicial. Antes: aberto · confirmado (CISO, SRE, PLD)
 - **Causa:** `Agency.active` nunca vira falso; não há pausa, `set_admin` nem atualização da Config (`lib.rs:15-98`).
 - **Efeito:** não existe resposta a incidente. Somado ao B-A22, um vazamento de chave não tem conserto.
 - **Correção:** `set_agency_active`, `set_admin` em duas etapas (propõe e aceita), `paused` na Config (bloqueia entradas: aceite, aporte e criação, **nunca** saídas legítimas) e congelar posição ou contrato por ordem judicial. Runbook dizendo quem assina a pausa.
@@ -111,7 +104,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Correção:** **piso de ativos**. O depósito inicial nunca serve de cobertura: `from_pool ≤ total_assets − piso` e `free_assets` calculado sobre `total − piso`. "Reiniciar 1:1" (sugerido antes) está **errado**: tira dinheiro de quem entra depois.
 
 ### B-A19 · Pix simulado: limite contornável e emissão dupla 🟡
-- **Status:** aberto · confirmado (PIX, RTF, CISO)
+- **Status:** **corrigido em parte em 2026-09-28**: `DEMO_TOKEN` nas rotas do Pix. **Falta:** estado `emitindo` antes do `await`, id no memo e teto global persistente. Antes: aberto · confirmado (PIX, RTF, CISO)
 - **Causa:**
   - O limite é por carteira de destino e fica na memória: um terceiro consegue esgotar o limite da Ana e bloquear o Pix dela (RTF-5).
   - Duas chamadas simultâneas emitem duas vezes.
@@ -122,26 +115,6 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
   - limite por quem chama e teto global num armazenamento persistente;
   - `DEMO_TOKEN`.
 - **Relacionado:** B-A06, B-A33.
-
-### B-A20 · A tela mostra um rendimento que o programa não paga 🟡 (🟠 em produção)
-- **Status:** aberto · confirmado (SC, ATU, REG)
-- **Sintoma:** a demo mostra cerca de 10%; a Solana paga quase zero. Além disso:
-  - o rendimento corre **sem limite** até alguém fechar o contrato (`elapsed` sem teto, `close_lease.rs:80`);
-  - quando a reserva acaba, paga R$ 0 sem aviso (`close_lease.rs:86`);
-  - prometer taxa fixa sobre depósito de terceiros sem ativo por trás é publicidade enganosa (CDC, art. 37) e parece captação remunerada (06, seção 4.1).
-- **Causa:** `historia.ts` usa "1 ano = 12 períodos"; `close_lease.rs:80-85` usa o ano real.
-- **Correção:**
-  - mesma fórmula na tela e no programa;
-  - tempo limitado a `end_ts + janela`;
-  - evento quando `yield_paid < accrued`;
-  - no produto, rendimento só de ativo real e sem prometer taxa fixa.
-
-### B-A21 · Qualquer carteira pode rodar o `initialize` antes da equipe e virar admin para sempre 🔴 (devnet/produção)
-- **Status:** aberto (2026-09-24) · SRE-1, CISO-2, SC-1, RTO-3, RTF-9
-- **Sintoma:** entre o `anchor deploy` e o `npm run setup`, um robô chama `initialize` com o próprio mint e as próprias regras. O PDA `["config"]` fica ocupado e não existe `set_admin`. A única saída é publicar com outro endereço. Um mint com PermanentDelegate ou congelamento dá ao atacante controle sobre os cofres.
-- **Causa:** `initialize.rs:10-12,77`: `admin: Signer` sem restrição.
-- **Correção:** exigir `program_data.upgrade_authority_address == Some(admin)` (conta `ProgramData`) ou uma chave fixa no código; publicar e inicializar no mesmo script, logo em seguida.
-- **Como testar:** LiteSVM: `initialize` assinado por uma carteira que não é a autoridade de atualização deve falhar.
 
 ### B-A22 · Uma chave só é autoridade de atualização, admin, emissora do tBRL e keeper 🔴 (devnet/produção)
 - **Status:** aberto · CISO-1, RTF-2
@@ -256,7 +229,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
   - log estruturado e alerta para mês vencido sem cobrança, erro repetido e saldo baixo de SOL.
 
 ### B-A33 · Rotas acionáveis por qualquer site, e visitas comuns drenam o SOL 🟠 (devnet)
-- **Status:** aberto · CISO-3, RTF-3, RTF-5, RTF-10, CISO-9
+- **Status:** **corrigido em parte em 2026-09-28**: `DEMO_TOKEN` e recusa de chamadas `Sec-Fetch-Site: cross-site`. **Falta:** mensagens de erro genéricas e não expor o `rpc` em `/api/estado`. Antes: aberto · CISO-3, RTF-3, RTF-5, RTF-10, CISO-9
 - **Sintoma:**
   - **Chamadas de outros sites:** as rotas aceitam `POST` `text/plain` de qualquer origem. Uma página maliciosa faz os navegadores dos visitantes chamarem `preparar`, `pix/*` e `keeper`, então limite por IP não adianta.
   - **Erros crus:** `errorMessage(e)` devolve erro cru. Um `ADMIN_SECRET_KEY` mal formatado (base58 em vez de JSON) vaza cerca de 10 caracteres da chave na resposta, e um erro de arquivo expõe o caminho `/Users/…`.
@@ -285,7 +258,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Correção:** commit (com a autorização do Saulo), backup cifrado das chaves fora da máquina e `solana-verify build` antes da devnet.
 
 ### B-A38 · O programa não emite eventos 🟡 (🟠 em produção)
-- **Status:** aberto · CISO-6, SC-L1, RTO-L4
+- **Status:** **corrigido em parte em 2026-09-28**: `emit!` em `pay_rent` (`AluguelPago`), `claim_default` (`AtrasoCobrado`), `close_lease` (`ContratoEncerrado`) e nas instruções de emergência (pausa, imobiliária, quarentena). **Falta:** eventos em aceite, aporte e saque do fundo, e o indexador com alertas. Antes: aberto · CISO-6, SC-L1, RTO-L4
 - **Causa:** nenhum `emit!` em `programs/fiador/src`.
 - **Efeito:** nada para monitorar, conciliar ou investigar; extratos só no navegador (B-A03).
 - **Correção:** `emit!` em toda movimentação de dinheiro (valor, contrato, quem assinou) e um indexador ou webhook com alertas.
@@ -328,6 +301,23 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Andamento (2026-09-27):** aviso de documento histórico no topo, quadro "O que não vale mais" e marcações nos itens 1, 2, 6, 12, 13 e 14. Continua aberto até o arquivo ser reescrito ou aposentado de vez.
 
 ## Corrigidos
+
+### B-026 · A tela mostrava um rendimento que o programa não pagava (era B-A20)
+- **Corrigido em:** 2026-09-28
+- **Correção:**
+  - tela e programa usam a mesma conta: taxa do contrato, 1 ano = 12 meses do contrato, contado só até o fim do prazo, sobre a caução devolvida (`close_lease` e `rendimento` em `historia.ts`);
+  - o evento `ContratoEncerrado` mostra o rendimento devido e o pago (reserva esgotada fica visível);
+  - os textos deixaram de prometer "10% ao ano": "simulado na demo; em produção, o da aplicação, sem taxa garantida".
+- **Como testar:** `caucao_volta_com_rendimento_e_reputacao_sobe` (2 meses de 60 s → R$ 100 sobre R$ 6.000).
+
+### B-025 · Qualquer carteira podia rodar o `initialize` antes da equipe (era B-A21)
+- **Corrigido em:** 2026-09-28
+- **Correção:** o `initialize` exige a conta `ProgramData` do programa e que a autoridade de atualização seja quem assina (`NotUpgradeAuthority`). A demo local passou a usar `--upgradeable-program … ~/.config/solana/id.json` (script `scripts/demo-local.sh`).
+- **Como testar:** `so_quem_publicou_o_programa_inicializa`.
+
+### B-024 · As telas não mostravam o limite de 50% do fundo por imobiliária (era B-A01)
+- **Corrigido em:** 2026-09-28
+- **Correção:** a barra lateral do painel da imobiliária mostra "de até R$ Y (metade do fundo, limite por imobiliária)", com Y = ativos do fundo × 50%.
 
 ### B-023 · A chave do programa sumiu e o endereço mudou
 - **Corrigido em:** 2026-09-28

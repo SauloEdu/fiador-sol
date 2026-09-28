@@ -69,6 +69,12 @@ pub struct Lease {
     /// Quanto o proprietário deixou de receber em meses cobrados sem dinheiro
     /// suficiente (caução e cobertura esgotadas). É pago primeiro na quitação (B-A10).
     pub landlord_debt: u64,
+    /// Pagamento do fundo ao proprietário retido em quarentena (ainda no cofre do fundo).
+    pub pool_pending: u64,
+    /// A partir de quando o pagamento em quarentena pode ser liberado.
+    pub pool_release_ts: i64,
+    /// Congelado pelo admin enquanto investiga suspeita de golpe.
+    pub pool_frozen: bool,
     /// Total já pago pelo pool a este contrato (limitado a `coverage_cap`).
     pub pool_covered_total: u64,
     pub periods: [PeriodState; MAX_PERIODS],
@@ -83,7 +89,6 @@ pub struct Lease {
     pub vault_bump: u8,
 }
 
-pub const SECONDS_PER_YEAR: i64 = 365 * 24 * 60 * 60;
 
 impl Lease {
     /// Vencimento do período `index` (0 = primeiro mês): fim do período.

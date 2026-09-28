@@ -10,7 +10,7 @@ const PUBLICOS: [string, string, string, string][] = [
 ];
 const FAQ: [string, string][] = [
   ["O que acontece se eu atrasar?", "Há 5 dias de carência. Depois, a caução paga o proprietário e você quita para repor o cofre. Não é calote: calote é terminar o contrato devendo."],
-  ["A taxa de garantia volta?", "Não. Os 8% de cada aluguel vão para o fundo que protege o proprietário se a caução acabar. A caução, sim, volta inteira no fim, com rendimento, menos danos aprovados."],
+  ["A taxa de garantia volta?", "Não. Os 8% de cada aluguel vão para o fundo que protege o proprietário se a caução acabar. A caução, sim, volta no fim, com rendimento, menos o que ela precisou cobrir e não foi reposto e os danos aprovados."],
   ["Quem pode mexer no cofre?", "Só as regras do contrato, que qualquer pessoa pode conferir na Solana. Na demonstração, a chave de atualização do programa é da equipe; em produção fica num multisig."],
   ["Como a imobiliária entra?", "A imobiliária credenciada cria o contrato e convida o dono e o inquilino. O PDF assinado fica com ela; na Solana vai só a impressão digital."],
 ];
@@ -73,7 +73,7 @@ export default function Home() {
           <div><h2 id="seg">Segurança</h2><p>O que protege o seu dinheiro, sem letra miúda.</p></div>
           <div><Icone n="cofre" t={28} cor="#9FB0F2" /><b>Cofre com regras públicas</b><p>A caução só se move pelas regras do contrato, que qualquer pessoa pode conferir.</p></div>
           <div><Icone n="cadeado" t={28} cor="#9FB0F2" /><b>Chave de atualização</b><p>Na demonstração, é da equipe. Em produção, fica num multisig, com código verificado.</p></div>
-          <div><Icone n="doc" t={28} cor="#9FB0F2" /><b>Seus dados fora da blockchain</b><p>Nome e CPF ficam com a imobiliária. Na Solana vão só códigos e valores.</p></div>
+          <div><Icone n="doc" t={28} cor="#9FB0F2" /><b>Nome e CPF fora da blockchain</b><p>Nome, CPF e o contrato ficam com a imobiliária. Na Solana vão a carteira, os valores e as datas.</p></div>
         </section>
         <section className={s.secao}>
           <h2 className={s.h2} style={{ fontSize: 40 }}>Perguntas frequentes</h2>

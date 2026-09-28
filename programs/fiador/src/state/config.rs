@@ -44,6 +44,12 @@ pub struct Config {
     pub dispute_window_secs: i64,
     /// Mint do selo "Bom Pagador" (Token-2022, intransferível). `default` = ainda não definido.
     pub badge_mint: Pubkey,
+    /// Pausa de emergência: bloqueia a entrada e a saída de dinheiro do fundo e
+    /// novos contratos. O pagamento de aluguel continua (08-RESPOSTA-A-GOLPE, passo 1).
+    pub paused: bool,
+    /// Quarentena do pagamento do fundo: o valor fica retido esse tempo antes de
+    /// ir ao proprietário, e o admin pode congelar ou cancelar (antifraude, camada 2).
+    pub pool_quarantine_secs: i64,
     pub bump: u8,
 }
 
@@ -68,7 +74,11 @@ pub struct ConfigParams {
     pub agency_max_pool_bps: u16,
     pub withdraw_cooldown_secs: i64,
     pub dispute_window_secs: i64,
+    pub pool_quarantine_secs: i64,
 }
+
+/// 30 dias: a maior quarentena aceita para o pagamento do fundo.
+pub const MAX_QUARANTINE_SECS: i64 = 30 * 24 * 60 * 60;
 
 /// 28 dias: o menor "mês" aceito fora do modo demonstração.
 pub const PRODUCTION_MIN_PERIOD_SECS: i64 = 28 * 24 * 60 * 60;

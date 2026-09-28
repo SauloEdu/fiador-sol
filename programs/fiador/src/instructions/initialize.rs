@@ -65,6 +65,17 @@ pub struct Initialize<'info> {
     )]
     pub admin_token: Box<InterfaceAccount<'info, TokenAccount>>,
 
+    /// Dados do programa publicado: só quem publicou (a autoridade de atualização)
+    /// pode inicializar. Sem isso, qualquer carteira que chamasse primeiro na devnet
+    /// viraria admin para sempre e escolheria o mint (B-A21).
+    #[account(
+        seeds = [crate::ID.as_ref()],
+        bump,
+        seeds::program = anchor_lang::solana_program::bpf_loader_upgradeable::ID,
+        constraint = program_data.upgrade_authority_address == Some(admin.key()) @ FiadorError::NotUpgradeAuthority,
+    )]
+    pub program_data: Account<'info, ProgramData>,
+
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
 }
@@ -91,6 +102,8 @@ pub fn handle_initialize(ctx: Context<Initialize>, params: ConfigParams, initial
     config.agency_max_pool_bps = params.agency_max_pool_bps;
     config.withdraw_cooldown_secs = params.withdraw_cooldown_secs;
     config.dispute_window_secs = params.dispute_window_secs;
+    config.pool_quarantine_secs = params.pool_quarantine_secs;
+    config.paused = false;
     config.bump = ctx.bumps.config;
 
     // Depósito inicial do admin: vira cotas que ninguém pode sacar
@@ -145,5 +158,9 @@ fn validate(p: &ConfigParams) -> Result<()> {
     require!((p.landlord_deductible_bps as u64) < BPS, FiadorError::InvalidConfig);
     require!(p.withdraw_cooldown_secs >= 0, FiadorError::InvalidConfig);
     require!(p.dispute_window_secs >= 0, FiadorError::InvalidConfig);
+    require!(
+        p.pool_quarantine_secs >= 0 && p.pool_quarantine_secs <= MAX_QUARANTINE_SECS,
+        FiadorError::InvalidConfig
+    );
     Ok(())
 }

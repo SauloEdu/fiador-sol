@@ -179,6 +179,100 @@ export type Fiador = {
       "args": []
     },
     {
+      "name": "cancelPoolPayment",
+      "docs": [
+        "Admin cancela um pagamento do fundo em quarentena (golpe confirmado)."
+      ],
+      "discriminator": [
+        100,
+        81,
+        108,
+        96,
+        216,
+        164,
+        41,
+        243
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lease",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  97,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lease.landlord",
+                "account": "lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.tenant",
+                "account": "lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.leaseId",
+                "account": "lease"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "claimDefault",
       "docs": [
         "Qualquer um cobra um mês vencido além da carência: caução e pool pagam o proprietário."
@@ -713,6 +807,105 @@ export type Fiador = {
       "args": []
     },
     {
+      "name": "freezePoolPayment",
+      "docs": [
+        "Admin congela ou descongela um pagamento do fundo em quarentena."
+      ],
+      "discriminator": [
+        8,
+        172,
+        222,
+        217,
+        217,
+        55,
+        151,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lease",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  97,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lease.landlord",
+                "account": "lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.tenant",
+                "account": "lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.leaseId",
+                "account": "lease"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "frozen",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "initProfile",
       "docs": [
         "Inquilino cria seu perfil de reputação."
@@ -885,6 +1078,92 @@ export type Fiador = {
             "Conta do admin de onde sai o depósito inicial permanente do pool."
           ],
           "writable": true
+        },
+        {
+          "name": "programData",
+          "docs": [
+            "Dados do programa publicado: só quem publicou (a autoridade de atualização)",
+            "pode inicializar. Sem isso, qualquer carteira que chamasse primeiro na devnet",
+            "viraria admin para sempre e escolheria o mint (B-A21)."
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  147,
+                  218,
+                  111,
+                  145,
+                  73,
+                  243,
+                  192,
+                  173,
+                  110,
+                  68,
+                  193,
+                  219,
+                  109,
+                  37,
+                  166,
+                  206,
+                  6,
+                  96,
+                  92,
+                  105,
+                  105,
+                  55,
+                  45,
+                  230,
+                  174,
+                  232,
+                  237,
+                  185,
+                  2,
+                  210,
+                  151,
+                  193
+                ]
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                2,
+                168,
+                246,
+                145,
+                78,
+                136,
+                161,
+                176,
+                226,
+                16,
+                21,
+                62,
+                247,
+                99,
+                174,
+                43,
+                0,
+                194,
+                185,
+                61,
+                22,
+                193,
+                36,
+                210,
+                192,
+                83,
+                122,
+                16,
+                4,
+                128,
+                0,
+                0
+              ]
+            }
+          }
         },
         {
           "name": "tokenProgram"
@@ -1551,6 +1830,135 @@ export type Fiador = {
       ]
     },
     {
+      "name": "releasePoolPayment",
+      "docs": [
+        "Qualquer um libera ao proprietário o pagamento do fundo depois da quarentena."
+      ],
+      "discriminator": [
+        165,
+        201,
+        91,
+        39,
+        206,
+        130,
+        186,
+        153
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Qualquer carteira (o keeper) libera depois do prazo; só paga a taxa."
+          ],
+          "signer": true
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "poolVault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  111,
+                  108,
+                  95,
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lease",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  97,
+                  115,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lease.landlord",
+                "account": "lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.tenant",
+                "account": "lease"
+              },
+              {
+                "kind": "account",
+                "path": "lease.leaseId",
+                "account": "lease"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "landlordToken",
+          "writable": true
+        },
+        {
+          "name": "tokenProgram"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "requestWithdraw",
       "docs": [
         "Investidor pede saque (aviso prévio)."
@@ -1743,6 +2151,79 @@ export type Fiador = {
       ]
     },
     {
+      "name": "setAgencyActive",
+      "docs": [
+        "Admin suspende ou reativa uma imobiliária."
+      ],
+      "discriminator": [
+        134,
+        79,
+        209,
+        241,
+        194,
+        127,
+        64,
+        14
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "agency",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  103,
+                  101,
+                  110,
+                  99,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "agency.authority",
+                "account": "agency"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "active",
+          "type": "bool"
+        }
+      ]
+    },
+    {
       "name": "setBadgeMint",
       "docs": [
         "Admin define o mint do selo \"Bom Pagador\" (Token-2022 intransferível)."
@@ -1793,6 +2274,56 @@ export type Fiador = {
         }
       ],
       "args": []
+    },
+    {
+      "name": "setPaused",
+      "docs": [
+        "Admin pausa ou retoma o protocolo (resposta a incidente)."
+      ],
+      "discriminator": [
+        91,
+        60,
+        125,
+        192,
+        176,
+        225,
+        166,
+        218
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "paused",
+          "type": "bool"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1872,6 +2403,112 @@ export type Fiador = {
         93,
         148,
         94
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "aluguelPago",
+      "discriminator": [
+        19,
+        86,
+        83,
+        187,
+        131,
+        230,
+        23,
+        127
+      ]
+    },
+    {
+      "name": "atrasoCobrado",
+      "discriminator": [
+        144,
+        183,
+        0,
+        250,
+        16,
+        17,
+        178,
+        207
+      ]
+    },
+    {
+      "name": "contratoEncerrado",
+      "discriminator": [
+        114,
+        85,
+        136,
+        144,
+        102,
+        210,
+        233,
+        132
+      ]
+    },
+    {
+      "name": "imobiliariaAtualizada",
+      "discriminator": [
+        60,
+        201,
+        113,
+        252,
+        111,
+        23,
+        205,
+        63
+      ]
+    },
+    {
+      "name": "pagamentoDoFundoCancelado",
+      "discriminator": [
+        183,
+        193,
+        122,
+        82,
+        136,
+        98,
+        159,
+        59
+      ]
+    },
+    {
+      "name": "pagamentoDoFundoCongelado",
+      "discriminator": [
+        141,
+        199,
+        201,
+        216,
+        90,
+        212,
+        221,
+        206
+      ]
+    },
+    {
+      "name": "pagamentoDoFundoLiberado",
+      "discriminator": [
+        29,
+        57,
+        115,
+        188,
+        81,
+        15,
+        142,
+        140
+      ]
+    },
+    {
+      "name": "protocoloPausado",
+      "discriminator": [
+        235,
+        0,
+        34,
+        10,
+        79,
+        89,
+        51,
+        71
       ]
     }
   ],
@@ -2010,6 +2647,36 @@ export type Fiador = {
       "code": 6026,
       "name": "disputeAlreadyResolved",
       "msg": "A disputa de danos já foi decidida"
+    },
+    {
+      "code": 6027,
+      "name": "protocolPaused",
+      "msg": "O protocolo está pausado para investigação"
+    },
+    {
+      "code": 6028,
+      "name": "poolPaymentPending",
+      "msg": "Há um pagamento do fundo em quarentena neste contrato"
+    },
+    {
+      "code": 6029,
+      "name": "poolPaymentFrozen",
+      "msg": "O pagamento do fundo está congelado para investigação"
+    },
+    {
+      "code": 6030,
+      "name": "quarantineActive",
+      "msg": "A quarentena do pagamento do fundo ainda não terminou"
+    },
+    {
+      "code": 6031,
+      "name": "nothingPending",
+      "msg": "Não há pagamento do fundo em quarentena"
+    },
+    {
+      "code": 6032,
+      "name": "notUpgradeAuthority",
+      "msg": "Só quem publicou o programa pode inicializá-lo"
     }
   ],
   "types": [
@@ -2040,6 +2707,70 @@ export type Fiador = {
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "aluguelPago",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "periodo",
+            "type": "u8"
+          },
+          {
+            "name": "emDia",
+            "type": "bool"
+          },
+          {
+            "name": "aoProprietario",
+            "type": "u64"
+          },
+          {
+            "name": "aoFundo",
+            "type": "u64"
+          },
+          {
+            "name": "aCaucao",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "atrasoCobrado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "periodo",
+            "type": "u8"
+          },
+          {
+            "name": "daCaucao",
+            "type": "u64"
+          },
+          {
+            "name": "doFundo",
+            "type": "u64"
+          },
+          {
+            "name": "emQuarentena",
+            "type": "bool"
+          },
+          {
+            "name": "faltaAoProprietario",
+            "type": "u64"
           }
         ]
       }
@@ -2181,6 +2912,22 @@ export type Fiador = {
             "type": "pubkey"
           },
           {
+            "name": "paused",
+            "docs": [
+              "Pausa de emergência: bloqueia a entrada e a saída de dinheiro do fundo e",
+              "novos contratos. O pagamento de aluguel continua (08-RESPOSTA-A-GOLPE, passo 1)."
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "poolQuarantineSecs",
+            "docs": [
+              "Quarentena do pagamento do fundo: o valor fica retido esse tempo antes de",
+              "ir ao proprietário, e o admin pode congelar ou cancelar (antifraude, camada 2)."
+            ],
+            "type": "i64"
+          },
+          {
             "name": "bump",
             "type": "u8"
           }
@@ -2254,6 +3001,57 @@ export type Fiador = {
           {
             "name": "disputeWindowSecs",
             "type": "i64"
+          },
+          {
+            "name": "poolQuarantineSecs",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "contratoEncerrado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "devolvidoAInquilina",
+            "type": "u64"
+          },
+          {
+            "name": "rendimento",
+            "type": "u64"
+          },
+          {
+            "name": "rendimentoDevido",
+            "docs": [
+              "Rendimento devido pela conta. Se for maior que o pago, a reserva acabou (B-A20)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "calote",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "imobiliariaAtualizada",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "agency",
+            "type": "pubkey"
+          },
+          {
+            "name": "ativa",
+            "type": "bool"
           }
         ]
       }
@@ -2387,6 +3185,27 @@ export type Fiador = {
             "type": "u64"
           },
           {
+            "name": "poolPending",
+            "docs": [
+              "Pagamento do fundo ao proprietário retido em quarentena (ainda no cofre do fundo)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "poolReleaseTs",
+            "docs": [
+              "A partir de quando o pagamento em quarentena pode ser liberado."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "poolFrozen",
+            "docs": [
+              "Congelado pelo admin enquanto investiga suspeita de golpe."
+            ],
+            "type": "bool"
+          },
+          {
             "name": "poolCoveredTotal",
             "docs": [
               "Total já pago pelo pool a este contrato (limitado a `coverage_cap`)."
@@ -2497,6 +3316,54 @@ export type Fiador = {
       }
     },
     {
+      "name": "pagamentoDoFundoCancelado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "valor",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pagamentoDoFundoCongelado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "congelado",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pagamentoDoFundoLiberado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lease",
+            "type": "pubkey"
+          },
+          {
+            "name": "valor",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
       "name": "periodState",
       "docs": [
         "Estado de cada período. Impede cobrar o mesmo mês duas vezes e impede",
@@ -2590,6 +3457,18 @@ export type Fiador = {
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "protocoloPausado",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pausado",
+            "type": "bool"
           }
         ]
       }

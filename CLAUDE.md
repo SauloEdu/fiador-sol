@@ -20,10 +20,12 @@ Idioma: português. Stack: Anchor (Rust) na devnet, Next.js + wallet adapter no 
 
 ## Site da demo (web/)
 - Next.js 16 + `@anchor-lang/core` 1.2 (web3.js v1). IDL copiada de `target/idl` para `web/src/idl/` — **recopie depois de mudar o programa** (`cp target/idl/fiador.json target/types/fiador.ts web/src/idl/`).
-- Rodar: Solana local (`solana-test-validator --reset --ledger .localnet --bpf-program <id> target/deploy/fiador.so`), depois `npm --prefix web run setup`, depois o preview "fiador-web" (.claude/launch.json).
+- Rodar: `./scripts/demo-local.sh` (faz tudo), ou à mão: Solana local (`solana-test-validator --reset --ledger .localnet --upgradeable-program <id> target/deploy/fiador.so ~/.config/solana/id.json` — o programa precisa ter o admin como autoridade de atualização, senão o `initialize` recusa: B-A21), depois `npm --prefix web run setup`, depois o preview "fiador-web" (.claude/launch.json).
+- Senha da demo publicada: `DEMO_TOKEN` no servidor protege as rotas que usam a chave do admin; sem ela (máquina local), ficam abertas. A senha é digitada no Palco ou na Central de risco (`/risco`) e fica só no navegador.
+- Endereço do programa: `AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4` (a chave antiga foi perdida, B-023). Cópia da chave em `~/Documents/Fiador-backups/`.
 - Chaves do admin/keeper só no servidor (`web/src/lib/server.ts`); carteiras de demonstração no localStorage do navegador.
 - Teste de ponta a ponta: `npx tsx scripts/e2e.ts` (dentro de web/, ~5 min por causa do relógio real).
-- Rotas do produto (design "Recibo" com cara de banco, igual ao canvas): `/` página inicial, `/apresentacao` Palco da banca (celular da Ana ao vivo + registros da Solana + botão Avançar), `/inquilino` app da Ana, `/proprietario` app do Carlos, `/imobiliaria` painel (cria o contrato), `/investidor` fundo, `/reputacao/[carteira]` página pública. `/demo` é o console técnico antigo.
+- Rotas do produto (design "Recibo" com cara de banco, igual ao canvas): `/` página inicial, `/apresentacao` Palco da banca (celular da Ana ao vivo + registros da Solana + botão Avançar), `/inquilino` app da Ana, `/proprietario` app do Carlos, `/imobiliaria` painel (cria o contrato), `/investidor` fundo, `/reputacao/[carteira]` página pública, `/risco` Central de risco (pausa, suspensão de imobiliária, quarentena do fundo). `/demo` é o console técnico antigo.
 - Componentes visuais em `web/src/ui/` (index.tsx + ui.module.css); regras da história (nomes, meses, cartela, cofre) em `web/src/lib/historia.ts`. Estado compartilhado entre abas: `DemoProvider` + `useDemo` (eventos no localStorage e BroadcastChannel).
 
 ## Fiador Doc (obrigatório para qualquer IA)

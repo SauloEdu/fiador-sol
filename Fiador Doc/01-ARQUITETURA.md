@@ -22,7 +22,7 @@ flowchart LR
     Admin["Chave do admin = chave do keeper<br/>(nunca vai ao navegador)"]
   end
   subgraph Solana["Solana (local ou devnet)"]
-    Programa["Programa fiador<br/>(Anchor, 16 instruções)"]
+    Programa["Programa fiador<br/>(Anchor, 21 instruções)"]
     Contas["Contas: Config, Pool, Agency,<br/>Lease, cofres, TenantProfile, Position"]
     Tokens["tBRL (real digital de teste)<br/>Selo Bom Pagador (Token-2022)"]
   end
@@ -44,7 +44,7 @@ São três camadas:
 ## 3. Programa na Solana (`programs/fiador/`)
 
 - **Tecnologia:** Anchor 1.2 (Rust), Solana CLI 4.2 (Anza). Endereço do programa: `AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4` (desde 28/09; o anterior, `C6wu…`, foi perdido com a chave, ver B-023). Cópia da chave em `~/Documents/Fiador-backups/`. A chave fica em `target/deploy/fiador-keypair.json`, fora do git; se perder, o endereço muda.
-- **Organização:** `src/lib.rs` (lista das 16 instruções), `src/instructions/` (uma instrução por arquivo; as do fundo ficam em `pool_ops.rs`), `src/state/` (formato das contas), `src/errors.rs` (mensagens de erro em português), `src/utils.rs` (transferência de tokens).
+- **Organização:** `src/lib.rs` (lista das 21 instruções), `src/instructions/` (uma instrução por arquivo; as do fundo ficam em `pool_ops.rs`), `src/state/` (formato das contas), `src/errors.rs` (mensagens de erro em português), `src/utils.rs` (transferência de tokens).
 - **Testes:** `programs/fiador/tests/test_lease.rs`, 55 testes com LiteSVM 0.16 e relógio simulado, incluindo as regressões das brechas corrigidas em 28/09 e um teste de invariantes com eventos aleatórios. Rodar com `cargo test`. As brechas ainda abertas da seção 9 **não** estão na suíte. Algumas têm prova de conceito em `Fiador Doc/provas/` (11 testes que passam hoje, confirmando a brecha), para colar na suíte e inverter depois da correção.
 
 ### 3.1 Contas (onde os dados ficam)

@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { PublicKey } from "@solana/web3.js";
 import { brl } from "@/lib/format";
 import styles from "./demo.module.css";
+import { apiPost } from "@/lib/api";
 
 type Cobranca = { id: string; valor: number; copiaECola: string };
 
@@ -30,10 +31,7 @@ export function Pix({
   async function gerar() {
     setErro(null);
     setEstado("gerando");
-    const r = await fetch("/api/pix/cobranca", {
-      method: "POST",
-      body: JSON.stringify({ carteira: carteira.toBase58(), valor }),
-    }).then((x) => x.json());
+    const r = await apiPost("/api/pix/cobranca", { carteira: carteira.toBase58(), valor }).catch((e: Error) => ({ erro: e.message }));
     setEstado("livre");
     if (r.erro) return setErro(r.erro);
     setCob(r);
@@ -42,9 +40,7 @@ export function Pix({
   async function confirmar() {
     if (!cob) return;
     setEstado("confirmando");
-    const r = await fetch("/api/pix/confirmar", { method: "POST", body: JSON.stringify({ id: cob.id }) }).then((x) =>
-      x.json()
-    );
+    const r = await apiPost("/api/pix/confirmar", { id: cob.id }).catch((e: Error) => ({ erro: e.message }));
     setEstado("livre");
     if (r.erro) return setErro(r.erro);
     onPago(cob.valor, r.assinatura);

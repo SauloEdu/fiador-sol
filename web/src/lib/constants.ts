@@ -17,6 +17,9 @@ export const DEMO = {
   apyBps: 1000,
   disputeWindowSecs: 30,
   withdrawCooldownSecs: 30,
+  /** Cada imobiliária trava no máximo esta fatia do fundo (agency_max_pool_bps). */
+  agencyMaxPoolBps: 5000,
+  poolQuarantineSecs: 30,
 };
 
 export function explorerTx(sig: string) {
