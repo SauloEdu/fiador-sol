@@ -2671,6 +2671,11 @@
       "code": 6032,
       "name": "NotUpgradeAuthority",
       "msg": "Só quem publicou o programa pode inicializá-lo"
+    },
+    {
+      "code": 6033,
+      "name": "WithdrawRequestExpired",
+      "msg": "O pedido de saque venceu: peça de novo e espere o aviso prévio"
     }
   ],
   "types": [

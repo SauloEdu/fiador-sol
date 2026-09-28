@@ -190,3 +190,8 @@ Erros (mensagens em português) em `src/errors.rs`. Os 46 testes em `tests/test_
 - Textos corrigidos: rendimento sem taxa prometida; "Nome e CPF fora da blockchain"; definição de calote; o que volta da caução.
 - `scripts/demo-local.sh`: sobe a Solana local com `--upgradeable-program … ~/.config/solana/id.json`.
 - **Testes:** 66, com 7 novos: `so_o_admin_pausa_e_suspende`, `pausa_bloqueia_contratos_e_fundo_mas_o_aluguel_continua`, `imobiliaria_suspensa_nao_cria_contrato_nem_convite_e_aceito`, `pagamento_do_fundo_fica_em_quarentena_e_depois_vai_ao_proprietario`, `golpe_confirmado_congela_e_cancela_o_pagamento_do_fundo`, `nao_fecha_contrato_com_pagamento_do_fundo_em_quarentena`, `so_quem_publicou_o_programa_inicializa`. O ambiente de teste grava a autoridade de atualização nos dados do programa (`definir_autoridade_de_atualizacao`).
+
+## Saque do fundo com prazo (2026-09-28)
+- `pool_withdraw`: além do aviso prévio, o pedido vale só por uma janela do mesmo tamanho (`WithdrawRequestExpired`, B-A12). Na demo: 30 s de aviso + 30 s para concluir.
+- Tela `/investidor/resgatar`: mostra "concluir em até mm:ss" e, se vencer, "O pedido de resgate venceu" com "Pedir o resgate de novo" (`investidor/dados.ts`: `pedidoVencido`, `faltaVencer`).
+- Testes: 67 (novo `regressao_b_a12_pedido_de_saque_vence`; `quem_pediu_saque_ainda_absorve_o_calote` renova o pedido vencido).

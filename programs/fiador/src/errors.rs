@@ -68,4 +68,6 @@ pub enum FiadorError {
     NothingPending,
     #[msg("Só quem publicou o programa pode inicializá-lo")]
     NotUpgradeAuthority,
+    #[msg("O pedido de saque venceu: peça de novo e espere o aviso prévio")]
+    WithdrawRequestExpired,
 }

@@ -56,7 +56,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Como testar:** `curl -XPOST localhost:3000/api/demo/preparar` sem token deve responder 401.
 
 ### B-A12 · Pedido de saque do fundo não expira 🔴
-- **Status:** aberto · **confirmado com prova** (`poc_rto_b_a12_saida_antes_do_calote`). O CISO propôs 🟠; ficou 🔴 pela regra do conselho.
+- **Status:** **corrigido em parte em 2026-09-28**: o pedido de saque vale só por uma janela do tamanho do aviso prévio (`WithdrawRequestExpired`); teste `regressao_b_a12_pedido_de_saque_vence`; a tela do investidor mostra o prazo e o pedido vencido. **Falta:** provisão de sinistros e saque pelo menor valor da cota (B-A27), contra pedidos escalonados entre carteiras. Antes: aberto · **confirmado com prova** (`poc_rto_b_a12_saida_antes_do_calote`). O CISO propôs 🟠; ficou 🔴 pela regra do conselho.
 - **Sintoma:** o investidor pede o saque de tudo logo depois de aportar e, quando vê um atraso, sai antes de o fundo pagar a cobertura.
 - **Causa:** `pool_ops.rs:142-146` só confere `agora ≥ pedido + aviso`.
 - **Correção:** a janela de validade sozinha não basta. Com pedidos escalonados entre carteiras, cerca de 22% do dinheiro fica sempre pronto para sair (SC). Juntar três medidas:

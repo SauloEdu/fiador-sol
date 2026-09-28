@@ -2,6 +2,17 @@
 
 Da mais nova para a mais antiga. **Toda mudança no software ganha uma entrada aqui** (modelo no README). As entradas anteriores a 2026-09-24 foram reconstruídas a partir das conversas de construção.
 
+## 2026-09-28 · Pedido de saque com prazo (B-A12)
+- **Quem:** Claude Opus 5.5
+- **O quê:** o pedido de saque do fundo vale só por uma janela do tamanho do aviso prévio. Antes, um pedido antigo ficava pronto para sempre, e o investidor saía no instante em que via um calote chegando. A tela do investidor mostra o prazo e o pedido vencido.
+- **Arquivos:** `programs/fiador/src/{errors.rs,instructions/pool_ops.rs}`, `programs/fiador/tests/test_lease.rs`, `web/src/app/investidor/{dados.ts,resgatar/page.tsx}`, `web/src/idl/*`, Fiador Doc 02, 03 e 04.
+- **Verificação:**
+  - `cargo test` 67/67;
+  - `tsc` sem erros;
+  - programa atualizado na Solana local;
+  - no navegador: aporte de R$ 5.000, pedido de resgate, contagem do aviso prévio, "concluir em até 0:21" e, depois, "O pedido de resgate venceu".
+- **Pendências:** B-A27 (provisão de sinistros).
+
 ## 2026-09-28 · Pronto para a devnet e Pix sem emissão dupla
 - **Quem:** Claude Opus 5.5
 - **O quê:**

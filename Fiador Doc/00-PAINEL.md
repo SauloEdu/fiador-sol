@@ -6,8 +6,8 @@ Atualizado em 2026-09-28. Uma página para consultar antes de reuniões e da ban
 
 | Área | Situação | Onde ler |
 |---|---|---|
-| Programa na Solana | 21 instruções, **66/66 testes passando** (regressões das brechas corrigidas, antifraude, resposta a golpe, `initialize` protegido e invariantes). Endereço novo `AxA7…` desde 28/09 (B-023). Roda na rede local; ainda não foi publicado na devnet. | [01-ARQUITETURA](01-ARQUITETURA.md) |
-| Segurança do software | **26 brechas de segurança abertas** (B-A08 a B-A41). Fechadas: B-A36 (27/09); B-A09, B-A10, B-A18, B-A20, B-A21 e B-A26 (28/09); em parte: B-A08, B-A14, B-A19, B-A23, B-A24, B-A25, B-A33, B-A38; B-A11 era falso alarme. | [07-SEGURANCA-SOFTWARE](07-SEGURANCA-SOFTWARE.md), [04-BUGS](04-BUGS.md) |
+| Programa na Solana | 21 instruções, **67/67 testes passando** (regressões das brechas corrigidas, antifraude, resposta a golpe, `initialize` protegido e invariantes). Endereço novo `AxA7…` desde 28/09 (B-023). Roda na rede local; ainda não foi publicado na devnet. | [01-ARQUITETURA](01-ARQUITETURA.md) |
+| Segurança do software | **25 brechas de segurança abertas** (B-A08 a B-A41). Fechadas: B-A36 (27/09); B-A09, B-A10, B-A18, B-A19, B-A20, B-A21 e B-A26 (28/09); em parte: B-A08, B-A12, B-A14, B-A23, B-A24, B-A25, B-A33, B-A38; B-A11 era falso alarme. | [07-SEGURANCA-SOFTWARE](07-SEGURANCA-SOFTWARE.md), [04-BUGS](04-BUGS.md) |
 | Golpes e resposta a incidentes | 8 tipos de golpe mapeados e roteiro de resposta em 6 passos. Hoje **não há pausa, suspensão de imobiliária nem quarentena** no programa: a resposta começaria tarde. | [08-RESPOSTA-A-GOLPE](08-RESPOSTA-A-GOLPE.md) |
 | Riscos de negócio, jurídicos e de dados | Tese jurídica a refazer; preço do fundo a recalibrar; faltam identidade e documentos LGPD. | [06-CONSELHO-SEGURANCA](06-CONSELHO-SEGURANCA.md) |
 | Código no git | **Só 4 arquivos** versionados; o resto está só no notebook, sem backup. | B-A37 |

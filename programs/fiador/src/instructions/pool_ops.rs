@@ -146,6 +146,13 @@ pub fn handle_pool_withdraw(ctx: Context<PoolWithdraw>) -> Result<()> {
         .checked_add(ctx.accounts.config.withdraw_cooldown_secs)
         .ok_or(FiadorError::MathOverflow)?;
     require!(now >= ready_at, FiadorError::CooldownActive);
+    // O pedido vale por uma janela do mesmo tamanho do aviso prévio. Sem isso, um
+    // pedido antigo ficava "pronto" para sempre, e o investidor saía do fundo no
+    // instante em que via um calote chegando (B-A12).
+    let expires_at = ready_at
+        .checked_add(ctx.accounts.config.withdraw_cooldown_secs)
+        .ok_or(FiadorError::MathOverflow)?;
+    require!(now <= expires_at, FiadorError::WithdrawRequestExpired);
 
     let pool = &ctx.accounts.pool;
     let amount = (shares as u128)

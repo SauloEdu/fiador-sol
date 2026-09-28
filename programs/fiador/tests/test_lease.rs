@@ -1176,6 +1176,10 @@ fn quem_pediu_saque_ainda_absorve_o_calote() {
         depois_da_carencia(&mut env, &lease, mes); // 3 da caução, 1 do pool
         env.claim_default(lease).unwrap();
     }
+    // O pedido venceu durante os meses de atraso (B-A12): renova e espera o aviso prévio.
+    assert_err(env.pool_withdraw(), "WithdrawRequestExpired");
+    env.request_withdraw(brl(100_000)).unwrap();
+    env.warp(30);
     let antes = env.balance(&env.investor_token);
     env.pool_withdraw().unwrap();
     // arcou com metade dos 2.000 e ganhou metade do prêmio de 160 do mês pago
@@ -1861,4 +1865,21 @@ fn so_quem_publicou_o_programa_inicializa() {
     );
     assert_err(env.send(ix, &[&stranger]), "NotUpgradeAuthority");
     env.initialize(demo_params(), brl(1000)).unwrap();
+}
+
+
+/// Regressão B-A12: um pedido antigo não fica "pronto" para sempre.
+#[test]
+fn regressao_b_a12_pedido_de_saque_vence() {
+    let mut env = Env::ready();
+    env.open_position().unwrap();
+    env.pool_deposit(brl(50_000)).unwrap();
+    let shares = env.fetch::<Position>(&pda(&[b"position", env.investor.pubkey().as_ref()])).shares;
+    env.request_withdraw(shares).unwrap();
+    env.warp(10_000);
+    assert_err(env.pool_withdraw(), "WithdrawRequestExpired");
+    env.request_withdraw(shares).unwrap();
+    assert_err(env.pool_withdraw(), "CooldownActive");
+    env.warp(30);
+    env.pool_withdraw().unwrap();
 }

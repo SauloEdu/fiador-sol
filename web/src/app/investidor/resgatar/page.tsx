@@ -136,6 +136,18 @@ export default function Resgatar() {
       </div>
     );
 
+  // O pedido venceu sem ser concluído: precisa pedir de novo (B-A12).
+  if (x.pediu && x.pedidoVencido)
+    return (
+      <div className={s.estreito}>
+        <Cartao pad="24px 20px" gap={14}>
+          <Estado ic="relogio" cor={COR.ambar} fundo="#FBF1E2" titulo="O pedido de resgate venceu"
+            texto={`Depois do aviso prévio, o resgate precisa ser concluído em ${DEMO.withdrawCooldownSecs} s. Isso impede que alguém deixe um pedido pronto para sair do fundo no instante em que vê um calote chegando. Peça de novo quando quiser.`} />
+        </Cartao>
+        <Botao onClick={pedir} disabled={!!d.ocupado}>Pedir o resgate de novo</Botao>
+      </div>
+    );
+
   // Aviso prévio cumprido.
   if (x.pediu)
     return (
@@ -151,7 +163,7 @@ export default function Resgatar() {
           </div>
         </Cartao>
         {!cabeNoLivre && <AvisoLivre livre={x.livre} oculto={oculto} />}
-        <Botao onClick={concluir} disabled={!!d.ocupado}>Concluir resgate</Botao>
+        <Botao onClick={concluir} disabled={!!d.ocupado}>Concluir resgate (em até {mmss(x.faltaVencer)})</Botao>
       </div>
     );
 

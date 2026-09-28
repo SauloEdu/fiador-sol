@@ -40,6 +40,10 @@ export function useInvestidor() {
   const pediu = (pos?.pending ?? 0) > 0;
   const liberaEm = pediu ? (pos?.requestTs ?? 0) + DEMO.withdrawCooldownSecs : 0;
   const faltaResgate = pediu ? Math.max(0, liberaEm - agora) : 0;
+  // O pedido vale por uma janela do tamanho do aviso prévio; depois vence (B-A12).
+  const venceEm = pediu ? liberaEm + DEMO.withdrawCooldownSecs : 0;
+  const pedidoVencido = pediu && agora > venceEm;
+  const faltaVencer = pediu ? Math.max(0, venceEm - agora) : 0;
 
   // Eventos do investidor (mais novos primeiro).
   const ev = d.eventos.filter((e) => e.tipo === "ok" && (e.kind === "aporte" || e.kind === "resgate"));
@@ -63,7 +67,7 @@ export function useInvestidor() {
 
   return {
     d, snap, cota, cotas, cotasPedidas, posicao, noFundo, reservado, livre, premios, saldo,
-    agora, pediu, liberaEm, faltaResgate, ev, aportado, temAporte, variacao, movimentos,
+    agora, pediu, liberaEm, faltaResgate, pedidoVencido, faltaVencer, ev, aportado, temAporte, variacao, movimentos,
     pronto: !!(snap && d.kp && d.addrs),
   };
 }

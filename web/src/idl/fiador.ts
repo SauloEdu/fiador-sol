@@ -2677,6 +2677,11 @@ export type Fiador = {
       "code": 6032,
       "name": "notUpgradeAuthority",
       "msg": "Só quem publicou o programa pode inicializá-lo"
+    },
+    {
+      "code": 6033,
+      "name": "withdrawRequestExpired",
+      "msg": "O pedido de saque venceu: peça de novo e espere o aviso prévio"
     }
   ],
   "types": [
