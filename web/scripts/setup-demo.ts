@@ -44,7 +44,8 @@ import { configPda, poolPda, poolVaultPda, yieldReservePda } from "../src/lib/pd
 
 const RPC = process.env.RPC_URL ?? "http://127.0.0.1:8899";
 const KEYPAIR = process.env.ADMIN_KEYPAIR ?? path.join(os.homedir(), ".config/solana/id.json");
-const OUT = path.join(__dirname, "..", ".demo.json");
+// DEMO_FILE permite guardar a devnet num arquivo separado (ex.: .demo.devnet.json).
+const OUT = path.join(__dirname, "..", process.env.DEMO_FILE ?? ".demo.json");
 const UNIT = 1_000_000;
 const brl = (reais: number) => new BN(reais).mul(new BN(UNIT));
 
@@ -147,6 +148,8 @@ async function main() {
 
   fs.writeFileSync(OUT, JSON.stringify(out, null, 2));
   console.log(`\nPronto. Endereços em ${OUT}`);
+  // Para hospedar o site: a mesma informação vai numa variável de ambiente (não há arquivo no servidor).
+  console.log(`\nDEMO_CONFIG=${JSON.stringify(out)}`);
 }
 
 /** Token-2022 com NonTransferable + nome/símbolo; depois a autoridade passa ao PDA config. */

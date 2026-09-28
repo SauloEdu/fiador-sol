@@ -2,6 +2,24 @@
 
 Da mais nova para a mais antiga. **Toda mudança no software ganha uma entrada aqui** (modelo no README). As entradas anteriores a 2026-09-24 foram reconstruídas a partir das conversas de construção.
 
+## 2026-09-28 · Pronto para a devnet e Pix sem emissão dupla
+- **Quem:** Claude Opus 5.5
+- **O quê:**
+  - `scripts/publicar-devnet.sh`: confere o saldo, compila, testa, publica o programa com o admin como autoridade de atualização, roda o `setup` na devnet (`.demo.devnet.json`) e mostra as variáveis para hospedar;
+  - o servidor aceita `DEMO_CONFIG` (hospedagem sem arquivo) e `DEMO_FILE`;
+  - o `setup` imprime a linha `DEMO_CONFIG`;
+  - Pix simulado sem emissão dupla (B-A19 → B-027);
+  - README do projeto reescrito: o que está pronto, segurança e ponto jurídico refeito conforme o conselho (06, seção 4.1).
+- **Por quê:** último passo antes da devnet; os jurados leem o README primeiro.
+- **Arquivos:** `scripts/publicar-devnet.sh`, `web/scripts/setup-demo.ts`, `web/src/lib/{server,pix}.ts`, `web/src/app/api/pix/confirmar/route.ts`, `web/.gitignore`, `README.md`, Fiador Doc 03 e 04.
+- **Verificação:**
+  - `tsc` sem erros;
+  - sintaxe do script conferida;
+  - teste do Pix com duas confirmações simultâneas (uma emissão só) e chamada de outro site recusada.
+- **Pendências:**
+  - **SOL de teste na devnet:** a torneira pela linha de comando recusou por limite; é preciso pegar em https://faucet.solana.com (login do Saulo no GitHub) para a carteira `3xM9TNYuY1dRUjbdePg3oBL5gvHHgwHCZELZG9NK2ws5` e rodar o script;
+  - hospedar o site (precisa de conta do Saulo, por exemplo na Vercel).
+
 ## 2026-09-28 · Resposta a golpe no programa, Central de risco e demo protegida
 - **Quem:** Claude Opus 5.5 (meta do Saulo: construir o app até ficar pronto, com commits e pushs autorizados)
 - **O quê:**

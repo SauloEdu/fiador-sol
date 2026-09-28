@@ -22,7 +22,9 @@ export function loadAdmin(): Keypair {
 export type DemoInfo = { rpc: string; programId: string; admin: string; mint: string; badgeMint: string };
 
 export function loadDemo(): DemoInfo {
-  const file = path.join(process.cwd(), ".demo.json");
+  // Hospedagem: a configuração vem da variável DEMO_CONFIG (JSON impresso pelo `npm run setup`).
+  if (process.env.DEMO_CONFIG) return JSON.parse(process.env.DEMO_CONFIG);
+  const file = path.join(process.cwd(), process.env.DEMO_FILE ?? ".demo.json");
   if (!fs.existsSync(file)) throw new Error("Rode `npm run setup` antes: web/.demo.json não existe.");
   return JSON.parse(fs.readFileSync(file, "utf8"));
 }

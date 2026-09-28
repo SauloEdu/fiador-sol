@@ -103,19 +103,6 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Causa:** `pool_ops.rs:65-68` divide por `total_assets` (pânico, não erro). Perto de zero, dá `MathOverflow` (1 unidade contra 10¹² cotas). O `claim_default` pode consumir até o último centavo.
 - **Correção:** **piso de ativos**. O depósito inicial nunca serve de cobertura: `from_pool ≤ total_assets − piso` e `free_assets` calculado sobre `total − piso`. "Reiniciar 1:1" (sugerido antes) está **errado**: tira dinheiro de quem entra depois.
 
-### B-A19 · Pix simulado: limite contornável e emissão dupla 🟡
-- **Status:** **corrigido em parte em 2026-09-28**: `DEMO_TOKEN` nas rotas do Pix. **Falta:** estado `emitindo` antes do `await`, id no memo e teto global persistente. Antes: aberto · confirmado (PIX, RTF, CISO)
-- **Causa:**
-  - O limite é por carteira de destino e fica na memória: um terceiro consegue esgotar o limite da Ana e bloquear o Pix dela (RTF-5).
-  - Duas chamadas simultâneas emitem duas vezes.
-  - **Segundo caminho de emissão dupla:** o `mintTo` chega à rede, a confirmação estoura o tempo, o `catch` devolve 500 sem marcar a cobrança como paga, e o "tentar de novo" emite outra vez.
-- **Correção:**
-  - estado `aberta → emitindo → paga | falhou` gravado **antes** do primeiro `await`;
-  - id da cobrança no memo da emissão, conferido na rede antes de tentar de novo;
-  - limite por quem chama e teto global num armazenamento persistente;
-  - `DEMO_TOKEN`.
-- **Relacionado:** B-A06, B-A33.
-
 ### B-A22 · Uma chave só é autoridade de atualização, admin, emissora do tBRL e keeper 🔴 (devnet/produção)
 - **Status:** aberto · CISO-1, RTF-2
 - **Sintoma:** `Anchor.toml:14`, `setup-demo.ts:46,84` e `server.ts:14-18` usam o mesmo `~/.config/solana/id.json`. O plano da devnet é colocar essa chave na hospedagem (`ADMIN_SECRET_KEY`). Quem ler as variáveis da hospedagem (conta invadida, colaborador, log ou dependência comprometida) publica um programa novo e **leva todos os cofres e o fundo**. Contradiz o item 13 do `docs/SEGURANCA.md` ("quatro carteiras").
@@ -243,7 +230,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Correção:** RPC dedicado (plano gratuito do Helius ou QuickNode); `getMultipleAccountsInfo`; leitura a cada 4 s; aviso visível quando a leitura falhar.
 
 ### B-A35 · Configuração de ambiente frágil 🟠 (devnet)
-- **Status:** aberto · SRE-4, SRE-5, SRE-6, RTF-6, CISO-7
+- **Status:** **corrigido em parte em 2026-09-28**: `DEMO_CONFIG` (variável de ambiente) no lugar do `.demo.json` na hospedagem; `DEMO_FILE` separa a devnet (`.demo.devnet.json`); `scripts/publicar-devnet.sh` publica e inicializa em sequência. Antes: aberto · SRE-4, SRE-5, SRE-6, RTF-6, CISO-7
 - **Sintoma:**
   - `web/.demo.json` (fora do git) é lido em tempo de execução, e na hospedagem todas as rotas respondem 500.
   - O RPC do servidor (`demo.rpc`) pode divergir do RPC do navegador (`NEXT_PUBLIC_RPC_URL`) sem que nada perceba.
@@ -301,6 +288,15 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Andamento (2026-09-27):** aviso de documento histórico no topo, quadro "O que não vale mais" e marcações nos itens 1, 2, 6, 12, 13 e 14. Continua aberto até o arquivo ser reescrito ou aposentado de vez.
 
 ## Corrigidos
+
+### B-027 · Pix simulado: emissão dupla e limite contornável (era B-A19)
+- **Corrigido em:** 2026-09-28 (o id da cobrança no memo da emissão ficou para a produção)
+- **Correção:**
+  - estado da cobrança `aberta → emitindo → paga | falhou`, gravado antes do primeiro `await`;
+  - uma cobrança que falhou não pode ser tentada de novo (é preciso gerar outro Pix);
+  - teto global de R$ 3.000.000 por hora, além do limite por carteira;
+  - `DEMO_TOKEN` e recusa de chamadas de outros sites.
+- **Como testar:** duas confirmações simultâneas da mesma cobrança dão uma emissão e um "já está sendo processada" (conferido com `curl` em 28/09).
 
 ### B-026 · A tela mostrava um rendimento que o programa não pagava (era B-A20)
 - **Corrigido em:** 2026-09-28

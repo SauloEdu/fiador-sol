@@ -3,7 +3,7 @@ node_modules
 next-env.d.ts
 *.tsbuildinfo
 # endereços do ambiente local gerados pelo scripts/setup-demo.ts
-.demo.json
+.demo*.json
 .env.local
 .env*
 !.env.example
