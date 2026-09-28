@@ -6,6 +6,7 @@ import BN from "bn.js";
 import { brl, fromUnits, short } from "@/lib/format";
 import { CLUSTER, DEMO, explorerAddress, explorerTx } from "@/lib/constants";
 import * as A from "@/lib/actions";
+import * as H from "@/lib/historia";
 import { Pix } from "./Pix";
 import { agoraChain, useDemo, type LeaseView, type Snapshot } from "./useDemo";
 import styles from "./demo.module.css";
@@ -206,8 +207,8 @@ export function DemoConsole() {
                       <span>Caução no cofre{l.depositRequired ? ` (de ${brl(l.depositRequired)})` : ""}</span>
                     </div>
                     <div className={styles.fact}>
-                      <b>{brl(l.coverageCap - l.poolCoveredTotal)}</b>
-                      <span>Cobertura do pool disponível</span>
+                      <b>{brl(H.coberturaDoFundo(l))}</b>
+                      <span>Cobertura do pool liberada (cresce a cada mês pago, até {brl(l.coverageCap)})</span>
                     </div>
                     <div className={styles.fact}>
                       <b>{l.paidOnTime} · {l.paidLate}</b>
@@ -381,7 +382,7 @@ export function DemoConsole() {
                   <button
                     className="btn primary"
                     type="button"
-                    disabled={!!d.ocupado}
+                    disabled={!!d.ocupado || (l.periods[proximo] !== "covered" && now < due(l, proximo) - l.periodSecs)}
                     onClick={() => {
                       if (!temSaldo("Inquilino", custoMes, saldoInq)) return;
                       const coberto = l.periods[proximo] === "covered";

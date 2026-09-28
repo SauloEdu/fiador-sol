@@ -40,6 +40,18 @@ export default function Pagar() {
   const ehQuitacao = i >= 0 && l.periods[i] === "covered";
   const noPrazo = i >= 0 && x.agora <= H.vencimento(l, i);
 
+  // O programa não aceita pagar adiantado (B-A09): mostra quando o mês começa.
+  if (!ehQuitacao && i >= 0 && x.agora < H.inicio(l, i) && etapa === "revisar")
+    return (
+      <App abas={<Abas itens={ABAS} ativa="Pagar" />}>
+        <Barra titulo="Pagar" voltar="/inquilino" />
+        <Pad>
+          <Estado ic="check" cor={COR.verde} fundo="#E3F1E9" titulo={`${H.Mes(i)} ainda não começou`} texto={`Você está em dia. O aluguel de ${H.nomeMes(i)} pode ser pago a partir do início do mês, daqui a ${H.mmss(H.inicio(l, i) - x.agora)}.`} />
+          <LinkBotao href="/inquilino/extrato" tipo="secundario">Ver comprovantes</LinkBotao>
+        </Pad>
+      </App>
+    );
+
   async function pagarNaSolana() {
     if (!d.kp || !d.addrs || !d.lease) return;
     setEtapa("processando");

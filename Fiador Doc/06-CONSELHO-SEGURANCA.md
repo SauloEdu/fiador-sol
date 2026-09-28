@@ -137,13 +137,13 @@ Erros de documentação corrigidos nesta revisão: B-016 (B-A11 era falso alarme
 
 **Hackathon (antes da banca)**
 1. ✅ Colocar `.env*` no `.gitignore` (B-A36, feito em 2026-09-27 como B-018). Fazer commit e backup cifrado das chaves (B-A37). Dono: CTO.
-2. No programa, pouco código:
-   - `agency ≠ landlord` (B-A25);
-   - período máximo e conta de vencimento sem estouro (B-A26);
-   - aluguel mínimo (B-A23);
-   - espera do fundo contada em tempo e no máximo 1 pagamento em dia por janela (B-A09, B-A23);
-   - `landlord_debt` (B-A10);
-   - disputa não reabre (B-A18).
+2. ✅ No programa, pouco código (feito em 2026-09-28, 55 testes passando):
+   - ✅ `agency ≠ landlord` (B-A25);
+   - ✅ período máximo e conta de vencimento sem estouro (B-A26);
+   - ✅ aluguel mínimo (B-A23);
+   - ✅ só paga mês que já começou e no máximo 1 pagamento em dia por janela (B-A09, B-A23);
+   - ✅ `landlord_debt` (B-A10);
+   - ✅ disputa não reabre (B-A18).
 
    Cada item com o teste de regressão tirado de `provas/`. Dono: engenheiro de smart contract.
 3. `DEMO_TOKEN` nas rotas que usam a chave do admin, com o público só em leitura (B-A08, B-A19, B-A33). RPC dedicado e leitura agrupada no Palco (B-A34). Programa e fundo publicados de novo no dia, com plano B local. Dono: AppSec/backend.
@@ -253,7 +253,7 @@ Com esses sinais, uma **pontuação de risco por contrato** decide: cobertura no
 
 | # | Medida | Esforço | Fase |
 |---|---|---|---|
-| 1 | Cobertura crescente + franquia | pouco código no programa | hackathon |
+| 1 | ✅ Cobertura crescente + franquia (feito em 28/09: ¼ de aluguel por mês pago, franquia de 20%) | pouco código no programa | hackathon |
 | 2 | Quarentena com contestação (versão simples) | instruções novas | hackathon ou devnet |
 | 3 | Alerta de calote cedo por imobiliária + reputação do proprietário | médio | devnet |
 | 4 | Garantia da imobiliária + pagamento conforme o despejo | médio (programa + contrato) | antes de dinheiro real |

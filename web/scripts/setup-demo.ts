@@ -93,12 +93,16 @@ async function main() {
     const params = {
       demoMode: true,
       minPeriodSecs: new BN(60),
+      maxPeriodSecs: new BN(600), // "mês" máximo de 10 min na demo (B-A26)
+      minRentAmount: brl(100), // aluguel mínimo de R$ 100 (B-A23)
       graceSecs: new BN(20),
       premiumBps: 800,
       apyBps: 1000,
       coverageMonths: 3,
       maxCoverageAmount: brl(15_000),
       coverageWaitingPeriods: 2,
+      coverageGrowthBps: 2500, // ¼ de aluguel de cobertura por mês pago (antifraude)
+      landlordDeductibleBps: 2000, // franquia de 20% do proprietário (antifraude)
       agencyMaxPoolBps: 5000,
       withdrawCooldownSecs: new BN(30),
       disputeWindowSecs: new BN(30),

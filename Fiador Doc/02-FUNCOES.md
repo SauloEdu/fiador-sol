@@ -6,15 +6,15 @@ Atualizado em 2026-09-24. **Toda** função, rota, instrução e tela do softwar
 
 | Instrução | Quem assina | O que faz | Regras que o programa confere |
 |---|---|---|---|
-| `initialize(params, initial_pool_deposit)` | admin | Cria a Config, o fundo (com depósito inicial permanente) e a reserva de rendimento. | Parâmetros válidos; em produção, mês de pelo menos 28 dias; só uma vez. |
+| `initialize(params, initial_pool_deposit)` | admin | Cria a Config, o fundo (com depósito inicial permanente) e a reserva de rendimento. | Parâmetros válidos; em produção, mês de pelo menos 28 dias; mês máximo entre o mínimo e 35 dias (`max_period_secs`); aluguel mínimo > 0 (`min_rent_amount`); só uma vez. |
 | `register_agency(authority)` | admin | Credencia uma imobiliária. | Só o admin. |
 | `init_profile()` | inquilina | Cria o perfil de reputação. | Um por carteira. |
-| `create_lease(lease_id, terms)` | imobiliária + proprietário | Registra o contrato (aluguel, duração do período, nº de meses, impressão digital do PDF) e copia as regras da Config. | Imobiliária ativa; proprietário ≠ inquilina; imobiliária ≠ parte; período ≥ mínimo; prazo válido; cobertura ≤ teto. |
+| `create_lease(lease_id, terms)` | imobiliária + proprietário | Registra o contrato (aluguel, duração do período, nº de meses, impressão digital do PDF) e copia as regras da Config. | Imobiliária ativa; proprietário ≠ inquilina; imobiliária ≠ inquilina; **imobiliária ≠ proprietário** (`AgencyIsLandlord`, B-A25); aluguel ≥ mínimo da Config (B-A23); mínimo ≤ período ≤ máximo (`PeriodTooLong`, B-A26); prazo de 1 a 36 meses; cobertura ≤ teto. |
 | `accept_lease()` | inquilina | Guarda a caução no cofre (3/2/1 aluguéis pela reputação) e reserva a cobertura no fundo. | Carteira certa; perfil existe; tokens da própria inquilina; fundo com cobertura livre; imobiliária ≤ 50% do fundo; só uma vez. |
-| `pay_rent()` | inquilina | Paga o próximo mês em aberto: aluguel ao proprietário e taxa ao fundo. Num mês `covered`, repõe o fundo e depois a caução. Emite o selo aos 3, 6 e 12 em dia. | Não paga além do prazo; em dia ou com atraso, conforme o relógio. |
-| `claim_default()` | qualquer um (o keeper) | Cobra o primeiro mês vencido além da carência: a caução paga o proprietário e, se faltar, o fundo cobre. | Só depois da carência; o fundo só entra após 2 aluguéis pagos e até o teto do contrato; não cobra o mesmo mês duas vezes. |
+| `pay_rent()` | inquilina | Paga o próximo mês em aberto: aluguel ao proprietário e taxa ao fundo. Num mês `covered`, paga **primeiro a dívida com o proprietário** (`landlord_debt`), depois repõe o fundo e por último a caução. Emite o selo aos 3, 6 e 12 em dia. | Não paga além do prazo; **só paga mês que já começou** (`PeriodNotStarted`, B-A09); em dia ou com atraso, conforme o relógio; na reputação, conta **no máximo 1 pagamento em dia por janela de `min_period_secs`**, somando todos os contratos (`last_on_time_ts`, B-A09/B-A23). |
+| `claim_default()` | qualquer um (o keeper) | Cobra o primeiro mês vencido além da carência: a caução paga o proprietário e, se faltar, o fundo cobre. O fundo só paga a cobertura já liberada (`Lease::coverage_available`: cresce a cada aluguel pago) e só 80% do que faltar (`after_deductible`, franquia do proprietário). O que nenhum dos dois cobrir vira `landlord_debt` (B-A10). | Só depois da carência; o fundo só entra após 2 aluguéis pagos e até o teto do contrato; não cobra o mesmo mês duas vezes. |
 | `end_lease()` | qualquer um (o keeper) | Fim do prazo: abre a janela de danos. | Prazo terminado; nenhum mês vencido sem pagamento nem cobrança. |
-| `open_dispute(amount)` | proprietário | Pede um valor de danos da caução; o contrato vai para `disputed`. | Contrato em `ending`; dentro da janela; valor > 0 e ≤ saldo da caução. |
+| `open_dispute(amount)` | proprietário | Pede um valor de danos da caução; o contrato vai para `disputed`. | Contrato em `ending`; disputa ainda não decidida (`DisputeAlreadyResolved`, B-A18); dentro da janela; valor > 0 e ≤ saldo da caução. |
 | `resolve_dispute(award)` | imobiliária | Decide quanto da caução vai ao proprietário e paga na hora. | Só a imobiliária do contrato; contrato em `disputed`; valor ≤ pedido e ≤ saldo da caução. Não há prazo para decidir (ver 04-BUGS.md, B-A02). |
 | `close_lease()` | qualquer um (o keeper) | Acerto final: repõe o fundo, devolve caução + rendimento à inquilina, libera a cobertura e atualiza a reputação (quem termina devendo recebe um calote). | Janela fechada ou decisão tomada; rendimento limitado ao saldo da reserva. |
 | `open_position()` | investidor | Cria a posição no fundo. | Uma por carteira. |
@@ -82,7 +82,7 @@ Erros (mensagens em português) em `src/errors.rs`. Os 46 testes em `tests/test_
 | `format.ts` | `toUnits(reais)`, `fromUnits(v)`, `brl(v)`, `short(addr)` |
 | `pdas.ts` | `configPda`, `poolPda`, `poolVaultPda`, `yieldReservePda`, `agencyPda`, `profilePda`, `positionPda`, `leasePda`, `vaultPda` |
 | `program.ts` | `keypairWallet(kp)`, `getProgram(conn, carteira)` |
-| `historia.ts` | `PESSOAS`, `IMOVEL`, `nomeMes(i)`, `anoMes(i)`, `Mes(i)`, `dataCarimbo(i)`, `vencimento(l, i)`, `celula(l, i, agora)`, `proximoAPagar(l)`, `taxa(l)`, `mesesDeCaucao(perfil)`, `rendimento(l, agora)`, `mmss(s)`, `momento(l, agora)` |
+| `historia.ts` | `PESSOAS`, `IMOVEL`, `nomeMes(i)`, `anoMes(i)`, `Mes(i)`, `dataCarimbo(i)`, `vencimento(l, i)`, `inicio(l, i)` (início do mês: só a partir daí o pagamento é aceito), `celula(l, i, agora)`, `proximoAPagar(l)`, `taxa(l)`, `mesesDeCaucao(perfil)`, `rendimento(l, agora)`, `mmss(s)`, `momento(l, agora)` |
 
 ## 4. Estado e componentes (`web/src/components/`)
 
@@ -137,3 +137,19 @@ Erros (mensagens em português) em `src/errors.rs`. Os 46 testes em `tests/test_
 | `scripts/demo-local.sh` | Liga a Solana local com o programa, prepara a demo e abre o site. |
 | `web/scripts/setup-demo.ts` (`npm run setup`) | Cria o tBRL e o selo, inicializa o protocolo com os parâmetros da demo e grava `web/.demo.json`. |
 | `web/scripts/e2e.ts` | Teste de ponta a ponta do fluxo completo (~5 min). |
+
+## Regras de contas e testes acrescentadas em 2026-09-28
+
+- **`Config`:** campos novos `max_period_secs` e `min_rent_amount` (também em `ConfigParams`). Demo: 600 s e R$ 100 (`web/scripts/setup-demo.ts`). Constante `MAX_PERIOD_SECS_LIMIT` = 35 dias.
+- **`Lease`:** campo novo `landlord_debt`; `due_ts(i)` agora devolve `Result` com conta verificada (sem pânico por estouro); função nova `period_start(i)`.
+- **`TenantProfile`:** campo novo `last_on_time_ts`.
+- **Erros novos** (no fim da lista, os códigos antigos não mudaram): `AgencyIsLandlord`, `PeriodTooLong`, `PeriodNotStarted`, `DisputeAlreadyResolved`.
+- **Testes** (`programs/fiador/tests/test_lease.rs`): 55. Auxiliares `esperar_mes_comecar` (os testes esperam o mês começar, como uma inquilina real) e `pay_rent_sem_esperar` (para provar que o pagamento adiantado falha). Regressões `regressao_b_a09_*`, `regressao_b_a10_*`, `regressao_b_a18_*`, `regressao_b_a23_*` (2), `regressao_b_a25_*`, `regressao_b_a26_*`, `config_recusa_mes_maximo_invalido` e `invariantes_do_dinheiro_com_eventos_aleatorios`.
+- **Site:** o Palco (`/apresentacao`), a tela de pagar (`/inquilino/pagar`) e o console (`/demo`) não oferecem pagar um mês antes de ele começar e mostram quanto falta; `scripts/e2e.ts` espera cada mês começar.
+
+## Antifraude no programa (2026-09-28, segundo lote)
+
+- **`Config` / `ConfigParams`:** `coverage_growth_bps` (2500 na demo: ¼ de aluguel por aluguel pago) e `landlord_deductible_bps` (2000: franquia de 20%). Validação: crescimento > 0 e franquia < 100%.
+- **`Lease`:** copia os dois campos na criação; funções `coverage_available()` e `after_deductible(valor)`.
+- **Site:** `coberturaDoFundo(l)` e `partDoFundo(l)` em `historia.ts` (mesma conta do programa); `LeaseView` ganhou `coverageWaitingPeriods`, `coverageGrowthBps`, `landlordDeductibleBps` e `landlordDebt`. As telas do proprietário, da imobiliária, o Palco e o console mostram a cobertura **liberada até agora**, não o teto.
+- **Testes:** `cobertura_do_fundo_cresce_com_os_meses_pagos`, `franquia_do_proprietario_e_paga_primeiro_na_quitacao`, `cobertura_cheia_so_depois_de_12_meses_pagos`, `config_recusa_franquia_de_100_por_cento_e_crescimento_zero`. Total: 59.

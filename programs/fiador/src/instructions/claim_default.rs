@@ -63,7 +63,7 @@ pub fn handle_claim_default(ctx: Context<ClaimDefault>) -> Result<()> {
         .find(|&i| lease.periods[i] == PeriodState::Open)
         .ok_or(FiadorError::NothingToClaim)?;
     let deadline = lease
-        .due_ts(index)
+        .due_ts(index)?
         .checked_add(lease.grace_secs)
         .ok_or(FiadorError::MathOverflow)?;
     require!(now > deadline, FiadorError::NothingToClaim);
@@ -72,15 +72,13 @@ pub fn handle_claim_default(ctx: Context<ClaimDefault>) -> Result<()> {
     let from_deposit = rent.min(lease.deposit_balance);
     let missing = rent - from_deposit;
 
-    // O pool só entra depois de `coverage_waiting_periods` aluguéis pagos
-    // e até o teto do contrato (SEGURANCA.md, item 1).
-    let paid = lease.paid_on_time as u32 + lease.paid_late as u32;
-    let pool_room = lease.coverage_cap.saturating_sub(lease.pool_covered_total);
-    let from_pool = if paid >= lease.coverage_waiting_periods as u32 {
-        missing.min(pool_room).min(ctx.accounts.pool.total_assets)
-    } else {
-        0
-    };
+    // O fundo só entra depois de `coverage_waiting_periods` aluguéis pagos, com
+    // cobertura que cresce a cada aluguel pago (até o teto do contrato), e paga
+    // só a parte fora da franquia do proprietário (antifraude, camada 1).
+    let from_pool = lease
+        .after_deductible(missing)
+        .min(lease.coverage_available())
+        .min(ctx.accounts.pool.total_assets);
 
     let token_program = ctx.accounts.token_program.key();
     let landlord_to = ctx.accounts.landlord_token.to_account_info();
@@ -126,6 +124,10 @@ pub fn handle_claim_default(ctx: Context<ClaimDefault>) -> Result<()> {
     lease.deposit_debt = lease.deposit_debt.checked_add(from_deposit).ok_or(FiadorError::MathOverflow)?;
     lease.pool_debt = lease.pool_debt.checked_add(from_pool).ok_or(FiadorError::MathOverflow)?;
     lease.pool_covered_total = lease.pool_covered_total.checked_add(from_pool).ok_or(FiadorError::MathOverflow)?;
+    // Caução e cobertura esgotadas: o que faltou vira dívida com o proprietário,
+    // paga primeiro quando a inquilina quitar (B-A10).
+    let shortfall = missing - from_pool;
+    lease.landlord_debt = lease.landlord_debt.checked_add(shortfall).ok_or(FiadorError::MathOverflow)?;
     lease.periods[index] = PeriodState::Covered;
     lease.defaults = lease.defaults.saturating_add(1);
     lease.status = LeaseStatus::Defaulted;

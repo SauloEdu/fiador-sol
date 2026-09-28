@@ -7,7 +7,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
+import { Connection, Keypair, LAMPORTS_PER_SOL, PublicKey, SYSVAR_CLOCK_PUBKEY } from "@solana/web3.js";
 import { getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
 import * as A from "../src/lib/actions";
 import { getProgram, keypairWallet } from "../src/lib/program";
@@ -49,7 +49,17 @@ async function main() {
   await A.acceptLease(connection, tenant, lease, agencyPda(agency.publicKey), a);
   log("contrato aceito; caução no cofre");
 
-  for (let i = 0; i < 3; i++) await A.payRent(connection, tenant, lease, landlord.publicKey, a);
+  // O programa só aceita pagar um mês depois que ele começa (B-A09). O relógio
+  // da rede anda alguns segundos atrás do relógio do computador: usa o da rede.
+  const relogioDaRede = async () => {
+    const info = await connection.getAccountInfo(SYSVAR_CLOCK_PUBKEY);
+    return Number(info!.data.readBigInt64LE(32));
+  };
+  const inicio = (await getProgram(connection, keypairWallet(admin)).account.lease.fetch(lease)).startTs.toNumber();
+  for (let i = 0; i < 3; i++) {
+    while ((await relogioDaRede()) < inicio + i * 60) await sleep(2);
+    await A.payRent(connection, tenant, lease, landlord.publicKey, a);
+  }
   log("3 meses pagos em dia; proprietário recebeu", brl(await A.tokenBalance(connection, a.mint, landlord.publicKey)));
   log("selos na carteira:", await A.tokenBalance(connection, a.badgeMint, tenant.publicKey, true));
 
@@ -57,7 +67,7 @@ async function main() {
   const l = await program.account.lease.fetch(lease);
   const alvo = l.startTs.toNumber() + 4 * 60 + 20 + 3;
   log(`esperando o mês 4 vencer + carência (~${alvo - Math.floor(Date.now() / 1000)} s)…`);
-  while (Math.floor(Date.now() / 1000) < alvo) await sleep(5);
+  while ((await relogioDaRede()) < alvo) await sleep(5);
   let k = await keeper();
   log("keeper:", JSON.stringify(k.feitas.map((f: { acao: string; mes?: number }) => f.acao + (f.mes ? " mês " + f.mes : ""))), k.erros);
   log("proprietário agora tem", brl(await A.tokenBalance(connection, a.mint, landlord.publicKey)));

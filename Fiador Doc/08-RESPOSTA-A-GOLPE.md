@@ -30,8 +30,8 @@ O resumo da seção 8 do [06](06-CONSELHO-SEGURANCA.md). Nenhuma camada resolve 
 
 | Camada | Medida | Contra | Hoje | Quando |
 |---|---|---|---|---|
-| 1. Tirar o incentivo | Cobertura que cresce com os meses pagos (¼ de aluguel por mês, até 3) | G1 | ❌ | hackathon |
-| | Franquia do proprietário (o fundo paga 70–80%) | G1 | ❌ | hackathon |
+| 1. Tirar o incentivo | Cobertura que cresce com os meses pagos (¼ de aluguel por mês, até 3) | G1 | ✅ `coverage_growth_bps` desde 28/09 | feito |
+| | Franquia do proprietário (o fundo paga 80%) | G1 | ✅ `landlord_deductible_bps` desde 28/09 | feito |
 | | Garantia da imobiliária, que perde primeiro | G1, G2, G5 | ❌ | antes de dinheiro real |
 | | Espera de 2 aluguéis antes do fundo entrar | G1 | ✅ `coverage_waiting_periods` | já existe |
 | | Limite de 50% do fundo por imobiliária e teto por contrato | G1 em série | ✅ `agency_max_pool_bps`, `max_coverage_amount` | já existe |
@@ -41,7 +41,7 @@ O resumo da seção 8 do [06](06-CONSELHO-SEGURANCA.md). Nenhuma camada resolve 
 | | Grafo de carteiras, preço do aluguel por CEP, vistoria, DataJud | G1, G2 | ❌ | produção |
 | 4. Identidade | CPF ligado a uma única carteira (atestador fora da blockchain) | G3, G1 | ❌ | antes de dinheiro real |
 | | Matrícula do imóvel e um só contrato ativo por imóvel | G2 | ❌ | antes de dinheiro real |
-| Regras básicas | Imobiliária ≠ proprietário; aluguel mínimo; mês com duração máxima | G4, G5, G8 | ❌ | hackathon |
+| Regras básicas | Imobiliária ≠ proprietário; aluguel mínimo; mês com duração máxima; 1 pagamento em dia por mês na reputação | G4, G5, G8 | ✅ desde 28/09 | feito |
 
 **Com cobertura crescente e franquia,** o lucro do conluio cai de cerca de R$ 14.200 em 8 meses para cerca de R$ 6.400 em 18 meses (conta aproximada do conselho). Isso dá tempo para as camadas 2 e 3 pegarem o golpe antes de o dinheiro sair.
 
@@ -120,7 +120,7 @@ Decisão, registrada no caso:
 Ordem de quem cobre a perda (alvo):
 1. **Caução da inquilina** (já é assim hoje).
 2. **Garantia da imobiliária** (primeira perda).
-3. **Franquia do proprietário** (a parte que o fundo não paga).
+3. **Franquia do proprietário** (a parte que o fundo não paga; 20% desde 28/09, e continua sendo dívida da inquilina com o dono).
 4. **Fundo** (o que sobrar, depois da quarentena).
 
 Depois:
@@ -157,16 +157,16 @@ Depois:
 | Eventos para monitorar (`emit!`) | ❌ | B-A38 |
 | Pausa e descredenciamento | ❌ | B-A14 |
 | Quarentena com contestação | ❌ | 06, seção 8.2 |
-| Cobertura crescente e franquia | ❌ | 06, seção 8.1 |
-| Imobiliária ≠ proprietário, aluguel mínimo, mês máximo | ❌ | B-A25, B-A23, B-A26 |
+| Cobertura crescente e franquia | ✅ 28/09 | 06, seção 8.1 |
+| Imobiliária ≠ proprietário, aluguel mínimo, mês máximo | ✅ 28/09 | B-A25 (em parte), B-A23 (em parte), B-A26 |
 | Alertas automáticos | ❌ | 06, seção 9.2 |
 | Identidade verificada | ❌ | 06, seção 4.3 |
 | Contrato de credenciamento com garantia e regresso | ❌ (jurídico) | 06, seção 9.4 |
 | Canal de denúncia e `security.txt` | ❌ | 06, seção 9.3 |
 
 **Prioridade para a banca:**
-1. Cobertura crescente + franquia.
-2. Imobiliária ≠ proprietário.
+1. ~~Cobertura crescente + franquia~~ (feito em 28/09).
+2. ~~Imobiliária ≠ proprietário~~ (feito em 28/09).
 3. `pause` e `suspend_agency`.
 4. Uma quarentena simples.
 

@@ -48,4 +48,12 @@ pub enum FiadorError {
     InvalidBadgeMint,
     #[msg("Contas do selo ausentes ou erradas")]
     InvalidBadgeAccounts,
+    #[msg("A imobiliária não pode ser a proprietária do imóvel")]
+    AgencyIsLandlord,
+    #[msg("Período maior que o máximo permitido")]
+    PeriodTooLong,
+    #[msg("Esse mês ainda não começou: não dá para pagar adiantado")]
+    PeriodNotStarted,
+    #[msg("A disputa de danos já foi decidida")]
+    DisputeAlreadyResolved,
 }

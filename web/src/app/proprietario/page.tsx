@@ -112,9 +112,9 @@ export default function Inicio() {
             </div>
             <div>
               <Linha k="Caução no cofre" v={esconder(x.cofre)} />
-              <Linha k="Fundo de garantia" v={x.fundoAtivo ? esconder(x.fundo) : "o fundo entra após o 2º aluguel pago"} />
+              <Linha k="Fundo de garantia" v={x.fundoAtivo ? esconder(x.fundo) : `o fundo entra após o ${l.coverageWaitingPeriods}º aluguel pago`} />
             </div>
-            <Txt peq>Se a Ana atrasar, o cofre paga você no fim da carência. Se a caução acabar, o fundo cobre até {reais(fromUnits(l.coverageCap))} neste contrato.</Txt>
+            <Txt peq>Se a Ana atrasar, o cofre paga você no fim da carência. Se a caução acabar, o fundo paga {H.partDoFundo(l)}% de cada aluguel que faltar. A cobertura cresce a cada aluguel pago, até {reais(fromUnits(l.coverageCap))} neste contrato; o restante continua sendo dívida da Ana com você.</Txt>
           </section>
         )}
         {l.status !== "pending" && (

@@ -57,6 +57,10 @@ export type LeaseView = {
   poolDebt: number;
   poolCoveredTotal: number;
   coverageCap: number;
+  coverageWaitingPeriods: number;
+  coverageGrowthBps: number;
+  landlordDeductibleBps: number;
+  landlordDebt: number;
   periods: EstadoPeriodo[];
   paidOnTime: number;
   paidLate: number;
@@ -226,6 +230,10 @@ export function useDemo() {
             poolDebt: n(l.poolDebt),
             poolCoveredTotal: n(l.poolCoveredTotal),
             coverageCap: n(l.coverageCap),
+            coverageWaitingPeriods: l.coverageWaitingPeriods,
+            coverageGrowthBps: l.coverageGrowthBps,
+            landlordDeductibleBps: l.landlordDeductibleBps,
+            landlordDebt: n(l.landlordDebt),
             periods: l.periods.slice(0, l.totalPeriods).map((p) => key(p) as EstadoPeriodo),
             paidOnTime: l.paidOnTime,
             paidLate: l.paidLate,

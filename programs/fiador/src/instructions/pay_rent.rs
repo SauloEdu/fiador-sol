@@ -8,9 +8,9 @@ use crate::utils::move_tokens;
 /// O inquilino paga o próximo período em aberto.
 ///
 /// - Período `Open`: aluguel vai direto ao proprietário e o prêmio ao pool.
-/// - Período `Covered` (a caução/pool já pagou o proprietário): o dinheiro
-///   repõe primeiro o pool e depois a caução — o proprietário nunca recebe
-///   duas vezes pelo mesmo mês (SEGURANCA.md, item 3).
+/// - Período `Covered` (a caução/pool já pagou o proprietário): o dinheiro paga
+///   primeiro o que faltou ao proprietário, depois repõe o pool e por último a
+///   caução — o proprietário nunca recebe duas vezes pelo mesmo mês.
 #[derive(Accounts)]
 pub struct PayRent<'info> {
     #[account(mut)]
@@ -83,61 +83,35 @@ pub fn handle_pay_rent(ctx: Context<PayRent>) -> Result<()> {
     );
     let index = lease.next_unsettled().ok_or(FiadorError::NoPeriodDue)?;
     let state = lease.periods[index];
+    // Não dá para pagar um mês que ainda não começou: pagar adiantado contaria
+    // como "em dia" e liberaria selos e a cobertura do fundo na hora (B-A09).
+    require!(now >= lease.period_start(index)?, FiadorError::PeriodNotStarted);
     let rent = lease.rent_amount;
     let premium = lease.premium().ok_or(FiadorError::MathOverflow)?;
-    let on_time = state == PeriodState::Open && now <= lease.due_ts(index);
+    let on_time = state == PeriodState::Open && now <= lease.due_ts(index)?;
+
+    // Mês coberto: o dinheiro paga primeiro o que o proprietário deixou de
+    // receber (B-A10), depois repõe o pool e, por último, a caução.
+    // O proprietário nunca recebe duas vezes pelo mesmo mês.
+    let (to_landlord, repay_pool, to_vault) = if state == PeriodState::Open {
+        (rent, 0, 0)
+    } else {
+        let to_landlord = rent.min(lease.landlord_debt);
+        let rest = rent - to_landlord;
+        let repay_pool = rest.min(lease.pool_debt);
+        (to_landlord, repay_pool, rest - repay_pool)
+    };
+    let to_pool = premium.checked_add(repay_pool).ok_or(FiadorError::MathOverflow)?;
 
     let token_program = ctx.accounts.token_program.key();
     let tenant_info = ctx.accounts.tenant.to_account_info();
     let from = ctx.accounts.tenant_token.to_account_info();
-
-    // Prêmio do pool: pago em todo período (é o "seguro").
-    move_tokens(
-        token_program,
-        from.clone(),
-        ctx.accounts.pool_vault.to_account_info(),
-        &ctx.accounts.mint,
-        tenant_info.clone(),
-        premium,
-        None,
-    )?;
-
-    let mut to_pool = premium;
-    let mut to_vault = 0u64;
-    if state == PeriodState::Open {
-        move_tokens(
-            token_program,
-            from,
-            ctx.accounts.landlord_token.to_account_info(),
-            &ctx.accounts.mint,
-            tenant_info,
-            rent,
-            None,
-        )?;
-    } else {
-        // Covered: repõe o pool primeiro, depois a caução.
-        let repay_pool = rent.min(lease.pool_debt);
-        let repay_vault = rent - repay_pool;
-        to_pool = to_pool.checked_add(repay_pool).ok_or(FiadorError::MathOverflow)?;
-        to_vault = repay_vault;
-        move_tokens(
-            token_program,
-            from.clone(),
-            ctx.accounts.pool_vault.to_account_info(),
-            &ctx.accounts.mint,
-            tenant_info.clone(),
-            repay_pool,
-            None,
-        )?;
-        move_tokens(
-            token_program,
-            from,
-            ctx.accounts.vault.to_account_info(),
-            &ctx.accounts.mint,
-            tenant_info,
-            repay_vault,
-            None,
-        )?;
+    for (to, amount) in [
+        (ctx.accounts.pool_vault.to_account_info(), to_pool),
+        (ctx.accounts.landlord_token.to_account_info(), to_landlord),
+        (ctx.accounts.vault.to_account_info(), to_vault),
+    ] {
+        move_tokens(token_program, from.clone(), to, &ctx.accounts.mint, tenant_info.clone(), amount, None)?;
     }
 
     let pool = &mut ctx.accounts.pool;
@@ -146,7 +120,7 @@ pub fn handle_pay_rent(ctx: Context<PayRent>) -> Result<()> {
 
     let lease = &mut ctx.accounts.lease;
     if state == PeriodState::Covered {
-        let repay_pool = to_pool - premium;
+        lease.landlord_debt -= to_landlord;
         lease.pool_debt -= repay_pool;
         lease.deposit_debt = lease.deposit_debt.saturating_sub(to_vault);
         lease.deposit_balance = lease.deposit_balance.checked_add(to_vault).ok_or(FiadorError::MathOverflow)?;
@@ -159,8 +133,16 @@ pub fn handle_pay_rent(ctx: Context<PayRent>) -> Result<()> {
     let mut earned_badge = false;
     if on_time {
         lease.paid_on_time = lease.paid_on_time.saturating_add(1);
-        profile.on_time = profile.on_time.saturating_add(1);
-        earned_badge = BADGE_MILESTONES.contains(&profile.on_time);
+        // Reputação: no máximo 1 pagamento em dia por janela de `min_period_secs`,
+        // somando todos os contratos da inquilina (B-A09/B-A23).
+        let window = ctx.accounts.config.min_period_secs;
+        let counts = profile.on_time == 0
+            || now >= profile.last_on_time_ts.saturating_add(window);
+        if counts {
+            profile.on_time = profile.on_time.saturating_add(1);
+            profile.last_on_time_ts = now;
+            earned_badge = BADGE_MILESTONES.contains(&profile.on_time);
+        }
     } else {
         lease.paid_late = lease.paid_late.saturating_add(1);
         profile.late = profile.late.saturating_add(1);

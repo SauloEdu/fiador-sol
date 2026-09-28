@@ -7,7 +7,7 @@ Next.js 16 + `@anchor-lang/core` 1.2 + `@solana/web3.js` 1.x. Fala direto com o 
 ```bash
 # 1) Solana local com o programa já instalado (na raiz do repositório)
 solana-test-validator --reset --ledger .localnet \
-  --bpf-program C6wuEPiedMo2hxs6DEHSxefKAEwRkKdcQucbi1DVg2wV target/deploy/fiador.so
+  --bpf-program AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4 target/deploy/fiador.so
 
 # 2) Preparar a demo: tBRL, selo, initialize, reserva de rendimento (gera web/.demo.json)
 cd web && npm install && npm run setup

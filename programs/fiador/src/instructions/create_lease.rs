@@ -53,9 +53,12 @@ pub fn handle_create_lease(ctx: Context<CreateLease>, lease_id: u64, terms: Leas
     // Conluio óbvio: ninguém aluga de si mesmo nem é inquilino da própria imobiliária.
     require_keys_neq!(landlord, tenant, FiadorError::SameParty);
     require_keys_neq!(ctx.accounts.agency_authority.key(), tenant, FiadorError::SameParty);
+    // A imobiliária decide as disputas: não pode ser parte interessada (B-A25).
+    require_keys_neq!(ctx.accounts.agency_authority.key(), landlord, FiadorError::AgencyIsLandlord);
 
-    require!(terms.rent_amount > 0, FiadorError::InvalidRent);
+    require!(terms.rent_amount >= config.min_rent_amount, FiadorError::InvalidRent);
     require!(terms.period_secs >= config.min_period_secs, FiadorError::PeriodTooShort);
+    require!(terms.period_secs <= config.max_period_secs, FiadorError::PeriodTooLong);
     require!(
         terms.total_periods > 0 && (terms.total_periods as usize) <= MAX_PERIODS,
         FiadorError::InvalidPeriods
@@ -82,6 +85,8 @@ pub fn handle_create_lease(ctx: Context<CreateLease>, lease_id: u64, terms: Leas
     lease.apy_bps = config.apy_bps;
     lease.coverage_cap = coverage_cap;
     lease.coverage_waiting_periods = config.coverage_waiting_periods;
+    lease.coverage_growth_bps = config.coverage_growth_bps;
+    lease.landlord_deductible_bps = config.landlord_deductible_bps;
     lease.dispute_window_secs = config.dispute_window_secs;
 
     lease.status = LeaseStatus::Pending;

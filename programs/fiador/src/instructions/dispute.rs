@@ -24,6 +24,8 @@ pub fn handle_open_dispute(ctx: Context<OpenDispute>, amount: u64) -> Result<()>
     let now = Clock::get()?.unix_timestamp;
     let lease = &mut ctx.accounts.lease;
     require!(lease.status == LeaseStatus::Ending, FiadorError::InvalidStatus);
+    // Decidida uma vez, a disputa não reabre (B-A18).
+    require!(!lease.dispute_resolved, FiadorError::DisputeAlreadyResolved);
     let window_end = lease
         .end_ts
         .checked_add(lease.dispute_window_secs)

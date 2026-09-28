@@ -121,7 +121,11 @@ export default function Inicio() {
           <Linha k="Aluguel, para Carlos Mendes" v={oculto ? "R$ ••••" : reais(x.aluguel)} />
           <Linha k="Taxa de garantia (não volta)" v={oculto ? "R$ ••••" : reais(x.taxa)} />
         </div>
-        <div style={{ paddingTop: 6 }}><LinkBotao href="/inquilino/pagar"><Icone n="pix" t={20} cor="#fff" e={2} />Pagar com Pix</LinkBotao></div>
+        <div style={{ paddingTop: 6 }}>
+          {x.comecaEm > 0
+            ? <Txt peq>Você está em dia. Dá para pagar {H.nomeMes(i)} a partir do início do mês, daqui a {H.mmss(x.comecaEm)}.</Txt>
+            : <LinkBotao href="/inquilino/pagar"><Icone n="pix" t={20} cor="#fff" e={2} />Pagar com Pix</LinkBotao>}
+        </div>
       </Cartao>
     );
   }

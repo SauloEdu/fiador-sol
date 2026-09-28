@@ -78,12 +78,16 @@ pub fn handle_initialize(ctx: Context<Initialize>, params: ConfigParams, initial
     config.mint = ctx.accounts.mint.key();
     config.demo_mode = params.demo_mode;
     config.min_period_secs = params.min_period_secs;
+    config.max_period_secs = params.max_period_secs;
+    config.min_rent_amount = params.min_rent_amount;
     config.grace_secs = params.grace_secs;
     config.premium_bps = params.premium_bps;
     config.apy_bps = params.apy_bps;
     config.coverage_months = params.coverage_months;
     config.max_coverage_amount = params.max_coverage_amount;
     config.coverage_waiting_periods = params.coverage_waiting_periods;
+    config.coverage_growth_bps = params.coverage_growth_bps;
+    config.landlord_deductible_bps = params.landlord_deductible_bps;
     config.agency_max_pool_bps = params.agency_max_pool_bps;
     config.withdraw_cooldown_secs = params.withdraw_cooldown_secs;
     config.dispute_window_secs = params.dispute_window_secs;
@@ -125,6 +129,11 @@ fn validate(p: &ConfigParams) -> Result<()> {
         );
     }
     require!(p.min_period_secs > 0, FiadorError::InvalidConfig);
+    require!(
+        p.max_period_secs >= p.min_period_secs && p.max_period_secs <= MAX_PERIOD_SECS_LIMIT,
+        FiadorError::InvalidConfig
+    );
+    require!(p.min_rent_amount > 0, FiadorError::InvalidConfig);
     require!(p.grace_secs >= 0, FiadorError::InvalidConfig);
     require!((p.premium_bps as u64) <= BPS, FiadorError::InvalidConfig);
     require!((p.apy_bps as u64) <= BPS, FiadorError::InvalidConfig);
@@ -132,6 +141,8 @@ fn validate(p: &ConfigParams) -> Result<()> {
         p.agency_max_pool_bps > 0 && (p.agency_max_pool_bps as u64) <= BPS,
         FiadorError::InvalidConfig
     );
+    require!(p.coverage_growth_bps > 0, FiadorError::InvalidConfig);
+    require!((p.landlord_deductible_bps as u64) < BPS, FiadorError::InvalidConfig);
     require!(p.withdraw_cooldown_secs >= 0, FiadorError::InvalidConfig);
     require!(p.dispute_window_secs >= 0, FiadorError::InvalidConfig);
     Ok(())

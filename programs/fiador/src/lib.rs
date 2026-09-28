@@ -10,7 +10,7 @@ pub mod utils;
 pub use instructions::*;
 pub use state::*;
 
-declare_id!("C6wuEPiedMo2hxs6DEHSxefKAEwRkKdcQucbi1DVg2wV");
+declare_id!("AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4");
 
 #[program]
 pub mod fiador {

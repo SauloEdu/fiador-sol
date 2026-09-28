@@ -40,12 +40,19 @@ fn demo_params() -> ConfigParams {
     ConfigParams {
         demo_mode: true,
         min_period_secs: 60,
+        max_period_secs: 600,
+        min_rent_amount: brl(100),
         grace_secs: 20,
         premium_bps: 800,
         apy_bps: 1000,
         coverage_months: 3,
         max_coverage_amount: brl(15_000),
         coverage_waiting_periods: 2,
+        // Nos testes antigos a cobertura é cheia desde a espera e sem franquia, para
+        // eles continuarem testando o que testavam. As regras reais (¼ de aluguel por
+        // mês pago e franquia de 20%) estão em `regras_antifraude()`.
+        coverage_growth_bps: 30_000,
+        landlord_deductible_bps: 0,
         agency_max_pool_bps: 5000,
         withdraw_cooldown_secs: 30,
         dispute_window_secs: 30,
@@ -314,6 +321,7 @@ fn modo_producao_aceita_mes_de_28_dias() {
     let params = ConfigParams {
         demo_mode: false,
         min_period_secs: PRODUCTION_MIN_PERIOD_SECS,
+        max_period_secs: MAX_PERIOD_SECS_LIMIT,
         ..demo_params()
     };
     env.initialize(params, brl(100_000)).unwrap();
@@ -580,7 +588,27 @@ impl Env {
         MintTo::new(&mut self.svm, &admin, &mint, &reserve, amount).owner(&admin).send().unwrap();
     }
 
+    /// Espera o mês a pagar começar, como uma inquilina real (o programa recusa
+    /// pagamento adiantado: B-A09). Mês já coberto (quitação) não precisa esperar.
+    fn esperar_mes_comecar(&mut self, lease: Pubkey) {
+        let l: Lease = self.fetch(&lease);
+        if let Some(i) = l.next_unsettled() {
+            if l.periods[i] == PeriodState::Open {
+                let inicio = l.period_start(i).unwrap();
+                let agora = self.now();
+                if agora < inicio {
+                    self.warp(inicio - agora);
+                }
+            }
+        }
+    }
+
     fn pay_rent(&mut self, lease: Pubkey) -> Result<(), FailedTransactionMetadata> {
+        self.esperar_mes_comecar(lease);
+        self.pay_rent_sem_esperar(lease)
+    }
+
+    fn pay_rent_sem_esperar(&mut self, lease: Pubkey) -> Result<(), FailedTransactionMetadata> {
         let tenant = self.tenant.insecure_clone();
         let ix = Instruction::new_with_bytes(
             fiador::id(),
@@ -793,7 +821,7 @@ fn contrato_ativo_com(mut env: Env, periods: u8) -> (Env, Pubkey) {
 /// Passa do vencimento + carência do período `index` (0 = primeiro mês).
 fn depois_da_carencia(env: &mut Env, lease: &Pubkey, index: usize) {
     let l = env.lease(lease);
-    let alvo = l.due_ts(index) + l.grace_secs + 1;
+    let alvo = l.due_ts(index).unwrap() + l.grace_secs + 1;
     let agora = env.now();
     if alvo > agora {
         env.warp(alvo - agora);
@@ -1121,14 +1149,17 @@ fn quem_pediu_saque_ainda_absorve_o_calote() {
     env.pool_deposit(brl(100_000)).unwrap();
     let (mut env, lease) = contrato_ativo_com(env, 12);
 
+    // Com a cobertura crescente, o fundo só cobre quem já pagou algum aluguel.
+    env.pay_rent(lease).unwrap();
     env.request_withdraw(brl(100_000)).unwrap(); // vê o atraso chegando e pede saque
-    for mes in 0..4 {
+    for mes in 1..5 {
         depois_da_carencia(&mut env, &lease, mes); // 3 da caução, 1 do pool
         env.claim_default(lease).unwrap();
     }
     let antes = env.balance(&env.investor_token);
     env.pool_withdraw().unwrap();
-    assert_eq!(env.balance(&env.investor_token) - antes, brl(99_000)); // arcou com metade dos 2.000
+    // arcou com metade dos 2.000 e ganhou metade do prêmio de 160 do mês pago
+    assert_eq!(env.balance(&env.investor_token) - antes, brl(99_000) + brl(80));
 }
 
 #[test]
@@ -1252,6 +1283,7 @@ impl Env {
         lease: Pubkey,
         badge: Option<(Pubkey, Pubkey)>,
     ) -> Result<(), FailedTransactionMetadata> {
+        self.esperar_mes_comecar(lease);
         let tenant = self.tenant.insecure_clone();
         let ix = Instruction::new_with_bytes(
             fiador::id(),
@@ -1360,4 +1392,233 @@ fn atraso_nao_rende_selo() {
         env.pay_rent_with_badge(lease, Some((badge, conta))).unwrap();
     }
     assert_eq!(env.badge_balance(&conta), 0, "só 2 em dia até aqui");
+}
+
+
+// ======================= Regressões do conselho de segurança (2026-09-28) =======================
+// Cada teste é uma prova de conceito de Fiador Doc/provas/ com a asserção invertida:
+// o ataque que funcionava agora precisa falhar.
+
+#[test]
+fn regressao_b_a09_nao_paga_mes_que_ainda_nao_comecou() {
+    let (mut env, lease) = contrato_ativo(12);
+    env.pay_rent(lease).unwrap(); // mês 0 já começou no aceite
+    assert_err(env.pay_rent_sem_esperar(lease), "PeriodNotStarted");
+    env.warp(60); // começa o mês 1
+    env.pay_rent(lease).unwrap();
+    assert_eq!(env.lease(&lease).paid_on_time, 2);
+    assert_eq!(env.profile().on_time, 2);
+}
+
+#[test]
+fn regressao_b_a10_proprietario_recebe_o_que_faltou_na_quitacao() {
+    let (mut env, lease) = contrato_ativo(6);
+    let antes = env.balance(&env.landlord_token);
+    // 4 meses sem pagar: a caução paga 3; o fundo não entra (nenhum aluguel pago).
+    for mes in 0..4 {
+        depois_da_carencia(&mut env, &lease, mes);
+        env.claim_default(lease).unwrap();
+    }
+    let l = env.lease(&lease);
+    assert_eq!(env.balance(&env.landlord_token) - antes, brl(6000));
+    assert_eq!(l.landlord_debt, brl(2000), "o 4º mês fica registrado como dívida com o proprietário");
+    // A inquilina quita os 4 meses: o proprietário recebe o 4º e a caução volta ao valor exigido.
+    for _ in 0..4 {
+        env.pay_rent(lease).unwrap();
+    }
+    let l = env.lease(&lease);
+    assert_eq!(env.balance(&env.landlord_token) - antes, brl(8000));
+    assert_eq!(l.landlord_debt, 0);
+    assert_eq!(l.deposit_balance, brl(6000), "a caução não passa do exigido");
+}
+
+#[test]
+fn regressao_b_a18_disputa_decidida_nao_reabre() {
+    let (mut env, lease) = contrato_ativo(2);
+    env.pay_rent(lease).unwrap();
+    env.warp(60);
+    env.pay_rent(lease).unwrap();
+    env.warp(60);
+    env.end_lease(lease).unwrap();
+    let (landlord, agency) = (env.landlord.insecure_clone(), env.agency.insecure_clone());
+    env.open_dispute(&landlord, lease, brl(1000)).unwrap();
+    env.resolve_dispute(&agency, lease, brl(500)).unwrap();
+    assert_err(env.open_dispute(&landlord, lease, brl(1000)), "DisputeAlreadyResolved");
+}
+
+#[test]
+fn regressao_b_a23_aluguel_abaixo_do_minimo_e_recusado() {
+    let mut env = Env::ready();
+    let (agency, landlord, tenant) =
+        (env.agency.insecure_clone(), env.landlord.insecure_clone(), env.tenant.insecure_clone());
+    let t = LeaseTerms { rent_amount: 1, period_secs: 60, total_periods: 1, contract_hash: [1u8; 32] };
+    assert_err(env.create_lease(&agency, &landlord, tenant.pubkey(), 100, t), "InvalidRent");
+}
+
+#[test]
+fn regressao_b_a23_contratos_paralelos_contam_um_pagamento_em_dia_por_mes() {
+    let mut env = Env::ready();
+    let (agency, landlord, tenant) =
+        (env.agency.insecure_clone(), env.landlord.insecure_clone(), env.tenant.insecure_clone());
+    env.init_profile(&tenant).unwrap();
+    let token = env.tenant_token;
+    for id in 100..104u64 {
+        let t = LeaseTerms { rent_amount: brl(100), period_secs: 60, total_periods: 1, contract_hash: [1u8; 32] };
+        env.create_lease(&agency, &landlord, tenant.pubkey(), id, t).unwrap();
+        let lease = lease_pda(&landlord.pubkey(), &tenant.pubkey(), id);
+        env.accept_lease(&tenant, token, lease).unwrap();
+        env.pay_rent(lease).unwrap();
+    }
+    assert_eq!(env.profile().on_time, 1, "4 contratos pagos no mesmo minuto valem 1 mês de reputação");
+}
+
+#[test]
+fn regressao_b_a25_imobiliaria_nao_e_a_proprietaria() {
+    let mut env = Env::ready();
+    let (agency, tenant) = (env.agency.insecure_clone(), env.tenant.pubkey());
+    assert_err(env.create_lease(&agency, &agency, tenant, 1, terms(2000)), "AgencyIsLandlord");
+}
+
+#[test]
+fn regressao_b_a26_mes_acima_do_maximo_e_recusado() {
+    let mut env = Env::ready();
+    let (agency, landlord, tenant) =
+        (env.agency.insecure_clone(), env.landlord.insecure_clone(), env.tenant.pubkey());
+    for (id, period) in [(1u64, 601i64), (2, 100 * 365 * 24 * 3600), (3, i64::MAX / 4), (4, i64::MAX)] {
+        let t = LeaseTerms { period_secs: period, ..terms(2000) };
+        assert_err(env.create_lease(&agency, &landlord, tenant, id, t), "PeriodTooLong");
+    }
+    assert_eq!(env.pool().locked_coverage, 0);
+}
+
+#[test]
+fn config_recusa_mes_maximo_invalido() {
+    let mut env = Env::new();
+    let menor = ConfigParams { max_period_secs: 59, ..demo_params() };
+    assert_err(env.initialize(menor, brl(1000)), "InvalidConfig");
+    let longo = ConfigParams { max_period_secs: MAX_PERIOD_SECS_LIMIT + 1, ..demo_params() };
+    assert_err(env.initialize(longo, brl(1000)), "InvalidConfig");
+    let sem_minimo = ConfigParams { min_rent_amount: 0, ..demo_params() };
+    assert_err(env.initialize(sem_minimo, brl(1000)), "InvalidConfig");
+}
+
+/// Invariantes do auditor (I1, I2, I4, I7), com pagamentos e cobranças em ordem aleatória.
+/// Protege o caminho do dinheiro depois da dívida com o proprietário (B-A10).
+#[test]
+fn invariantes_do_dinheiro_com_eventos_aleatorios() {
+    let mut seed: u64 = 0x9E3779B97F4A7C15;
+    let mut rnd = || {
+        seed ^= seed << 13;
+        seed ^= seed >> 7;
+        seed ^= seed << 17;
+        seed
+    };
+    for _run in 0..12 {
+        let (mut env, lease) = contrato_ativo(12);
+        for _ in 0..40 {
+            match rnd() % 4 {
+                0 => { let _ = env.pay_rent_sem_esperar(lease); }
+                1 => { let _ = env.claim_default(lease); }
+                _ => {
+                    env.warp((rnd() % 90) as i64 + 1);
+                    let _ = env.claim_default(lease);
+                }
+            }
+            let l = env.lease(&lease);
+            assert!(!(l.pool_debt > 0 && l.deposit_balance > 0), "I7: dívida com o fundo implica caução zero");
+            assert_eq!(env.balance(&pda(&[b"vault", lease.as_ref()])), l.deposit_balance, "I4");
+            let p = env.pool();
+            assert!(env.balance(&pda(&[b"pool_vault"])) >= p.total_assets, "I1");
+            assert_eq!(p.locked_coverage, l.coverage_cap - l.pool_covered_total, "I2");
+            assert!(l.deposit_balance <= l.deposit_required, "a caução nunca passa do exigido");
+        }
+    }
+}
+
+
+// ======================= Antifraude: cobertura crescente e franquia =======================
+
+/// Regras da demo e de produção: ¼ de aluguel de cobertura por mês pago e franquia de 20%.
+fn regras_antifraude() -> ConfigParams {
+    ConfigParams { coverage_growth_bps: 2500, landlord_deductible_bps: 2000, ..demo_params() }
+}
+
+fn env_com(params: ConfigParams) -> Env {
+    let mut env = Env::new();
+    env.initialize(params, brl(100_000)).unwrap();
+    let (admin, agency) = (env.admin.insecure_clone(), env.agency.pubkey());
+    env.register_agency(&admin, agency).unwrap();
+    env
+}
+
+/// Paga `n` meses em dia e deixa os 3 seguintes serem cobertos pela caução.
+fn paga_e_esgota_a_caucao(env: &mut Env, lease: &Pubkey, n: usize) {
+    for _ in 0..n {
+        env.pay_rent(*lease).unwrap();
+    }
+    for mes in n..n + 3 {
+        depois_da_carencia(env, lease, mes);
+        env.claim_default(*lease).unwrap();
+    }
+    assert_eq!(env.lease(lease).deposit_balance, 0);
+}
+
+#[test]
+fn cobertura_do_fundo_cresce_com_os_meses_pagos() {
+    let params = ConfigParams { landlord_deductible_bps: 0, ..regras_antifraude() };
+    let (mut env, lease) = contrato_ativo_com(env_com(params), 12);
+    // Golpe típico: paga só os 2 meses de espera e para.
+    paga_e_esgota_a_caucao(&mut env, &lease, 2);
+    assert_eq!(env.lease(&lease).coverage_available(), brl(1000), "2 meses pagos = ½ aluguel");
+    let antes = env.balance(&env.landlord_token);
+    depois_da_carencia(&mut env, &lease, 5);
+    env.claim_default(lease).unwrap();
+    assert_eq!(env.balance(&env.landlord_token) - antes, brl(1000), "o fundo paga só o que já foi liberado");
+    depois_da_carencia(&mut env, &lease, 6);
+    env.claim_default(lease).unwrap();
+    let l = env.lease(&lease);
+    assert_eq!(l.pool_covered_total, brl(1000));
+    assert_eq!(l.landlord_debt, brl(1000) + brl(2000), "o resto fica como dívida com o proprietário");
+}
+
+#[test]
+fn franquia_do_proprietario_e_paga_primeiro_na_quitacao() {
+    let params = ConfigParams { coverage_growth_bps: 30_000, ..regras_antifraude() };
+    let (mut env, lease) = contrato_ativo_com(env_com(params), 12);
+    paga_e_esgota_a_caucao(&mut env, &lease, 2);
+    let antes = env.balance(&env.landlord_token);
+    depois_da_carencia(&mut env, &lease, 5);
+    env.claim_default(lease).unwrap();
+    assert_eq!(env.balance(&env.landlord_token) - antes, brl(1600), "o fundo paga 80%");
+    let l = env.lease(&lease);
+    assert_eq!(l.pool_debt, brl(1600));
+    assert_eq!(l.landlord_debt, brl(400), "franquia de 20% fica devida ao proprietário");
+    // A inquilina volta a pagar: primeiro a franquia ao proprietário, depois o fundo.
+    let pool_antes = env.pool().total_assets;
+    env.pay_rent(lease).unwrap();
+    let l = env.lease(&lease);
+    assert_eq!(env.balance(&env.landlord_token) - antes, brl(2000));
+    assert_eq!(l.landlord_debt, 0);
+    assert_eq!(l.pool_debt, 0);
+    assert_eq!(env.pool().total_assets - pool_antes, brl(1600) + brl(160));
+}
+
+#[test]
+fn cobertura_cheia_so_depois_de_12_meses_pagos() {
+    let (mut env, lease) = contrato_ativo_com(env_com(regras_antifraude()), 16);
+    paga_e_esgota_a_caucao(&mut env, &lease, 12);
+    assert_eq!(env.lease(&lease).coverage_available(), brl(6000), "12 meses = teto de 3 aluguéis");
+    let antes = env.balance(&env.landlord_token);
+    depois_da_carencia(&mut env, &lease, 15);
+    env.claim_default(lease).unwrap();
+    assert_eq!(env.balance(&env.landlord_token) - antes, brl(1600));
+}
+
+#[test]
+fn config_recusa_franquia_de_100_por_cento_e_crescimento_zero() {
+    let mut env = Env::new();
+    let franquia = ConfigParams { landlord_deductible_bps: 10_000, ..demo_params() };
+    assert_err(env.initialize(franquia, brl(1000)), "InvalidConfig");
+    let zero = ConfigParams { coverage_growth_bps: 0, ..demo_params() };
+    assert_err(env.initialize(zero, brl(1000)), "InvalidConfig");
 }

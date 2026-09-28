@@ -25,7 +25,7 @@ pub fn handle_end_lease(ctx: Context<EndLease>) -> Result<()> {
         FiadorError::InvalidStatus
     );
     let last = lease.total_periods as usize - 1;
-    require!(now >= lease.due_ts(last), FiadorError::LeaseNotOver);
+    require!(now >= lease.due_ts(last)?, FiadorError::LeaseNotOver);
     // Todo mês precisa estar pago ou cobrado antes do acerto final.
     require!(!lease.has_open(), FiadorError::PendingPeriods);
 

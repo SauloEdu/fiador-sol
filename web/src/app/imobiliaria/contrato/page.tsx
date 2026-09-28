@@ -25,7 +25,7 @@ export default function Contrato() {
 
   const aluguel = fromUnits(l.rent);
   const cofre = fromUnits(l.depositBalance);
-  const fundoLivre = l.paidOnTime + l.paidLate >= 2 ? fromUnits(l.coverageCap - l.poolCoveredTotal) : 0;
+  const fundoLivre = fromUnits(H.coberturaDoFundo(l));
   const pedido = fromUnits(l.disputeAmount);
   const valorDecisao = decisao ?? Math.round(pedido * 0.66);
   const m = H.momento(l, agora);

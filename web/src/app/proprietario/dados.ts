@@ -39,8 +39,8 @@ export function useProprietario() {
   // Proteção: o que há no cofre agora mais a cobertura do fundo que ainda sobra.
   const cofre = l ? fromUnits(l.depositBalance) : 0;
   const pagosAteAgora = l ? l.paidOnTime + l.paidLate : 0;
-  const fundoAtivo = pagosAteAgora >= 2;
-  const fundo = l && fundoAtivo ? Math.max(0, fromUnits(l.coverageCap) - fromUnits(l.poolCoveredTotal)) : 0;
+  const fundoAtivo = !!l && pagosAteAgora >= l.coverageWaitingPeriods;
+  const fundo = l && fundoAtivo ? fromUnits(H.coberturaDoFundo(l)) : 0;
   const protecao = cofre + fundo;
 
   // Janela para registrar danos, depois que o contrato termina.

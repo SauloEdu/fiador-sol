@@ -7,7 +7,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-fiador = "C6wuEPiedMo2hxs6DEHSxefKAEwRkKdcQucbi1DVg2wV"
+fiador = "AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4"
 
 [provider]
 cluster = "localnet"

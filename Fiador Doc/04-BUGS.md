@@ -62,27 +62,6 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
   - **Produção:** credenciar só depois de verificar a empresa (KYB: CNPJ, CRECI, sócios, PEP e sanções) e assinar o contrato de credenciamento.
 - **Como testar:** `curl -XPOST localhost:3000/api/demo/preparar` sem token deve responder 401.
 
-### B-A09 · Pagar adiantado conta como "em dia" 🔴
-- **Status:** aberto · **confirmado com prova** (`provas/poc_sc.rs` → `sonda_b_a09_adiantado_conta_em_dia`)
-- **Sintoma:** logo depois do aceite, a inquilina chama `pay_rent` várias vezes seguidas, cada chamada conta como pagamento em dia e os selos saem na hora. Pagar 2 meses adiantados libera na hora a cobertura do fundo.
-- **Causa:** `pay_rent.rs:84-88`: `next_unsettled()` e "em dia" se `agora ≤ vencimento`, sem conferir se o mês já começou. A espera do fundo conta pagamentos, não tempo (`claim_default.rs:77-79`), e soma também os pagos com atraso.
-- **Correção:**
-  - exigir que o mês já tenha começado;
-  - contar a espera do fundo por **tempo decorrido** (`agora ≥ start_ts + espera × period_secs`);
-  - no perfil, aceitar no máximo 1 pagamento em dia por janela de `min_period_secs` (`last_on_time_ts`), somando todos os contratos. Isso fecha também a B-A23.
-- **Como testar:** inverter a asserção da sonda: pagar o mês 2 no instante do aceite deve falhar.
-
-### B-A10 · Mês cobrado sem dinheiro deixa o proprietário sem receber 🔴
-- **Status:** aberto · **confirmado com prova** (`poc_rto_b_a10_mes_coberto_sem_dinheiro`, `sonda_b_a10_mes_coberto_sem_dinheiro`)
-- **Sintoma:**
-  - O proprietário recebe R$ 0 por 4 quitações.
-  - A caução sobe além do exigido (R$ 8.000 com R$ 6.000 exigidos) e volta para a inquilina no fechamento.
-  - A quitação feita para o próprio cofre ainda conta como "pago" na espera do fundo.
-- **Causa:** `claim_default.rs:129` marca `Covered` sem olhar quanto foi pago; `pay_rent.rs:117-141` manda o pagamento de mês `covered` só para o fundo e para a caução.
-- **Correção:** guardar `landlord_debt` no `claim_default` (o que faltou pagar ao proprietário) e pagá-la **primeiro** no `pay_rent` de mês `covered`.
-  - **Não** recusar o `claim_default` quando nada seria pago (correção sugerida antes). O mês ficaria `open` para sempre, e o `end_lease` (`has_open`) e a cobertura travariam.
-- **Como testar:** inverter as asserções da prova: depois de quitar o 4º mês, o proprietário recebeu 4 aluguéis.
-
 ### B-A12 · Pedido de saque do fundo não expira 🔴
 - **Status:** aberto · **confirmado com prova** (`poc_rto_b_a12_saida_antes_do_calote`). O CISO propôs 🟠; ficou 🔴 pela regra do conselho.
 - **Sintoma:** o investidor pede o saque de tudo logo depois de aportar e, quando vê um atraso, sai antes de o fundo pagar a cobertura.
@@ -131,10 +110,6 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Causa:** `pool_ops.rs:65-68` divide por `total_assets` (pânico, não erro). Perto de zero, dá `MathOverflow` (1 unidade contra 10¹² cotas). O `claim_default` pode consumir até o último centavo.
 - **Correção:** **piso de ativos**. O depósito inicial nunca serve de cobertura: `from_pool ≤ total_assets − piso` e `free_assets` calculado sobre `total − piso`. "Reiniciar 1:1" (sugerido antes) está **errado**: tira dinheiro de quem entra depois.
 
-### B-A18 · A disputa pode ser reaberta depois de decidida 🟡
-- **Status:** aberto · **confirmado com prova** (`sonda_b_a18_reabre_disputa`)
-- **Correção:** exigir `!dispute_resolved` no `open_dispute`.
-
 ### B-A19 · Pix simulado: limite contornável e emissão dupla 🟡
 - **Status:** aberto · confirmado (PIX, RTF, CISO)
 - **Causa:**
@@ -178,7 +153,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
   - em produção, multisig (Squads) com timelock e, quando o código congelar, `--final`.
 
 ### B-A23 · Reputação máxima e 3 selos com aluguel de 1 unidade 🔴 (demo) · 🟠 (produção)
-- **Status:** aberto · **confirmado com prova** (`poc_rto_reputacao_fabricada_com_aluguel_minimo`) · RTO-1
+- **Status:** **corrigido em parte em 2026-09-28**: aluguel mínimo na Config (`min_rent_amount`, R$ 100 na demo) e no máximo 1 pagamento em dia por janela de tempo, somando todos os contratos (`last_on_time_ts`). Testes `regressao_b_a23_*`. **Falta:** trocar `leases_started` por contratos concluídos com ≥ 6 períodos e limitar o desconto quando o aluguel novo for maior que o maior já pago. Antes: · **confirmado com prova** (`poc_rto_reputacao_fabricada_com_aluguel_minimo`) · RTO-1
 - **Sintoma:**
   - 12 contratos de 1 período com aluguel de 1 unidade, cada um pago no mês corrente, dão `on_time=12`, `leases_started=12`, nível 2 e 3 selos.
   - Custo: 42 unidades (R$ 0,000042). O prêmio de 8% sobre 1 unidade arredonda para 0.
@@ -192,7 +167,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
   - desconto de caução limitado quando o aluguel novo for maior que o maior aluguel já pago.
 
 ### B-A24 · Conluio com imobiliária credenciada lucra cerca de R$ 14.200 por contrato 🔴 (produção)
-- **Status:** aberto · PLD-1, ATU-1, RTO-5 (três caminhos independentes chegaram ao mesmo número)
+- **Status:** aberto, **mitigado em parte em 2026-09-28**: cobertura crescente (¼ de aluguel por mês pago) e franquia de 20% do proprietário no programa (testes `cobertura_do_fundo_cresce_com_os_meses_pagos`, `franquia_do_proprietario_e_paga_primeiro_na_quitacao`, `cobertura_cheia_so_depois_de_12_meses_pagos`). Pela conta do conselho, o lucro cai para cerca de R$ 6.400 e o golpe passa a levar cerca de 18 meses. Faltam as outras camadas (08-RESPOSTA-A-GOLPE). · PLD-1, ATU-1, RTO-5 (três caminhos independentes chegaram ao mesmo número)
 - **Sintoma:** imobiliária, proprietário e inquilina combinados; aluguel de R$ 5.000 por 8 meses ou mais.
   1. A inquilina paga 2 meses; o aluguel volta ao comparsa, e o custo real são só as taxas de 8% (R$ 800).
   2. Ela para de pagar; a caução cobre os meses 3 a 5 e o fundo cobre os meses 6 a 8 (até R$ 15.000).
@@ -208,7 +183,7 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
   - demais camadas antifraude (cobertura que cresce com o tempo, franquia do proprietário, quarentena com contestação pelos investidores, sinais de detecção e pontuação de risco): 06, seção 8.
 
 ### B-A25 · A imobiliária pode ser a proprietária e decidir a própria disputa; a inquilina não tem voz 🟠 (🔴 em produção)
-- **Status:** aberto · PLD-2, CISO-5, SC-4, RTO-4, REG-4
+- **Status:** **corrigido em parte em 2026-09-28**: `create_lease` recusa imobiliária = proprietário (`AgencyIsLandlord`, teste `regressao_b_a25_*`). **Falta:** `respond_dispute` para a inquilina, prazo e retenção do valor contestado. Antes: · PLD-2, CISO-5, SC-4, RTO-4, REG-4
 - **Sintoma:** `create_lease` confere proprietário ≠ inquilina e imobiliária ≠ inquilina, mas **não** imobiliária ≠ proprietário (`create_lease.rs:54-55`; o próprio teste auxiliar usa esse caso, `test_lease.rs:222`). A imobiliária-proprietária pede danos iguais a toda a caução e decide a favor de si mesma. Mesmo sem esse conflito, a imobiliária é mandatária do proprietário, não árbitro, e a inquilina não tem instrução para responder (`lib.rs:60-68`).
 - **Correção:**
   - `require_keys_neq!(agency_authority, landlord)`;
@@ -216,18 +191,6 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
   - com contestação, o valor disputado fica retido até acordo, laudo, câmara independente ou alvará;
   - acima de um teto (ex.: 1 aluguel), exigir árbitro.
 - **Relacionado:** B-A02, B-A18.
-
-### B-A26 · "Mês" sem duração máxima: fundo travado para sempre e pânico por estouro 🔴 (demo) · 🟠 (produção)
-- **Status:** aberto · **confirmado com prova** (`poc_rto_trava_periodo_100_anos`, `poc_rto_trava_perpetua_da_cobertura`, `poc_rto_overflow_due_ts`, `sonda_periodo_gigante_panico`) · SC-2, RTO-2, RTF-1
-- **Sintoma:**
-  - Contrato com `period_secs` de 100 anos: nenhum vencimento chega, e a cobertura (até R$ 15.000) fica em `locked_coverage` para sempre.
-  - Com `period_secs` perto de `i64::MAX/4`, a conta do vencimento estoura e o programa entra em pânico (`lease.rs:84`).
-  - **Na demo, qualquer visitante trava 100% do fundo em cerca de 1 minuto, sem gastar nada**: B-A08 + Pix grátis + 4 contratos em duas imobiliárias. Na frente da banca, o aceite da Ana passa a falhar com `InsufficientPoolCoverage`, e nenhum investidor consegue sacar.
-- **Causa:** `create_lease.rs:58` só exige mínimo; `lease.rs:83-85` sem conta verificada.
-- **Correção:**
-  - `max_period_secs` na Config (ex.: 35 dias em produção, 600 s na demo) e duração total limitada;
-  - `checked_mul`/`checked_add` em `due_ts`, devolvendo `MathOverflow`;
-  - na demo, `DEMO_TOKEN` (B-A08) e fundo publicado de novo no dia.
 
 ### B-A27 · O fundo registra a perda tarde, e quem sai antes deixa o prejuízo para quem fica 🟠 (🔴 em produção)
 - **Status:** aberto · ATU-2, ATU-6, SC-5, RTO
@@ -365,6 +328,35 @@ Numeração: `B-0xx` para corrigidos, `B-Axx` para abertos. Ao corrigir um abert
 - **Andamento (2026-09-27):** aviso de documento histórico no topo, quadro "O que não vale mais" e marcações nos itens 1, 2, 6, 12, 13 e 14. Continua aberto até o arquivo ser reescrito ou aposentado de vez.
 
 ## Corrigidos
+
+### B-023 · A chave do programa sumiu e o endereço mudou
+- **Corrigido em:** 2026-09-28
+- **Sintoma:** ao compilar, o Anchor avisou "Program ID mismatch": o código dizia `C6wuEPiedMo2hxs6DEHSxefKAEwRkKdcQucbi1DVg2wV`, mas `target/deploy/fiador-keypair.json` tinha outro endereço.
+- **Causa:** a pasta `target/` foi apagada em algum momento antes de 28/09 (o motivo não foi identificado), levando a chave original. Ela não estava no git (de propósito) e não tinha cópia. O backup de 28/09 às 12:49 tentou copiar a chave e falhou em silêncio porque o arquivo já não existia; o `anchor build` seguinte criou uma chave nova.
+- **Impacto:** baixo. O programa nunca foi publicado na devnet com o endereço antigo; a Solana local carrega o programa por arquivo.
+- **Correção:** endereço novo `AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4` (`anchor keys sync`), descrição do programa (IDL) recopiada para o site e **cópia da chave em `~/Documents/Fiador-backups/fiador-keypair-AxA7.json`** (permissão 600). Antes da devnet, guardar também uma cópia cifrada fora do notebook (B-A37).
+- **Como evitar:** nunca apagar `target/deploy/`; conferir que a cópia da chave existe antes de qualquer `cargo clean`.
+
+### B-022 · "Mês" sem duração máxima travava o fundo e podia entrar em pânico (era B-A26)
+- **Corrigido em:** 2026-09-28
+- **Correção:** `max_period_secs` na Config (600 s na demo; no máximo 35 dias em qualquer modo), conferido no `create_lease` (`PeriodTooLong`); `due_ts` com conta verificada, sem pânico. A parte da demo aberta a qualquer visitante continua em B-A08.
+- **Como testar:** `regressao_b_a26_mes_acima_do_maximo_e_recusado` (601 s, 100 anos, `i64::MAX/4`, `i64::MAX`) e `config_recusa_mes_maximo_invalido`.
+
+### B-021 · A disputa podia ser reaberta depois de decidida (era B-A18)
+- **Corrigido em:** 2026-09-28
+- **Correção:** `open_dispute` exige `!dispute_resolved` (`DisputeAlreadyResolved`).
+- **Como testar:** `regressao_b_a18_disputa_decidida_nao_reabre`.
+
+### B-020 · Mês cobrado sem dinheiro deixava o proprietário sem receber (era B-A10)
+- **Corrigido em:** 2026-09-28
+- **Correção:** o `claim_default` guarda em `landlord_debt` o que a caução e o fundo não cobriram. Na quitação (`pay_rent` de mês `covered`), o dinheiro paga primeiro essa dívida ao proprietário, depois o fundo e por último a caução. A caução não passa mais do exigido.
+- **Como testar:** `regressao_b_a10_proprietario_recebe_o_que_faltou_na_quitacao` (4 meses sem pagar, 4 quitações: o proprietário recebe R$ 8.000 e a caução volta a R$ 6.000) e `invariantes_do_dinheiro_com_eventos_aleatorios`.
+
+### B-019 · Pagar adiantado contava como "em dia" (era B-A09)
+- **Corrigido em:** 2026-09-28
+- **Correção:** `pay_rent` só aceita o mês que já começou (`PeriodNotStarted`), e a reputação conta no máximo 1 pagamento em dia por janela de `min_period_secs`, somando todos os contratos (`last_on_time_ts`). Com isso, a espera do fundo (2 aluguéis pagos) também passa a exigir tempo decorrido.
+- **Como testar:** `regressao_b_a09_nao_paga_mes_que_ainda_nao_comecou`.
+- **Efeito nas telas:** o Palco, a tela de pagar e o console mostram "mês começa em mm:ss" em vez de oferecer o pagamento.
 
 ### B-018 · O `.gitignore` não protegia `.env` nem arquivos de chave (era B-A36)
 - **Corrigido em:** 2026-09-27

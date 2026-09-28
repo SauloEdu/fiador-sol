@@ -83,6 +83,8 @@ function Palco() {
         proximo = agora > venc + l.graceSecs
           ? { rotulo: "A cobrança automática vai pagar o Carlos", espera: "aguardando o registro na Solana…" }
           : { rotulo: `Deixar ${H.nomeMes(i)} atrasar`, espera: agora > venc ? `carência termina em ${H.mmss(venc + l.graceSecs - agora)}` : `${H.nomeMes(i)} vence em ${H.mmss(venc - agora)}` };
+      else if (!coberto && agora < H.inicio(l, i))
+        proximo = { rotulo: `Ana paga ${H.nomeMes(i)}`, espera: `${H.nomeMes(i)} começa em ${H.mmss(H.inicio(l, i) - agora)}` };
       else proximo = { rotulo: coberto ? `Ana quita ${H.nomeMes(i)}` : `Ana paga ${H.nomeMes(i)}`, acao: pagar };
     } else if (l.status === "active" || l.status === "defaulted") {
       proximo = { rotulo: "Fim do prazo", espera: `o contrato termina em ${H.mmss(H.vencimento(l, l.totalPeriods - 1) - agora)}` };
@@ -103,7 +105,7 @@ function Palco() {
   const mensagem = !ultimo ? "Tudo o que acontecer aqui fica registrado na Solana." :
     ultimo.kind === "cobranca" ? `O Carlos recebeu ${reais(aluguel, false)} da caução. Ninguém precisou cobrar a Ana.` : ultimo.texto;
 
-  const prot = l ? fromUnits(l.depositBalance) + (l.paidOnTime + l.paidLate >= 2 ? fromUnits(l.coverageCap - l.poolCoveredTotal) : 0) : 0;
+  const prot = l ? fromUnits(l.depositBalance) + fromUnits(H.coberturaDoFundo(l)) : 0;
   const m = H.momento(l, agora);
 
   return (

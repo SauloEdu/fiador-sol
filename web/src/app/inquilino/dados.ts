@@ -28,6 +28,8 @@ export function useInquilino() {
   const emCarencia = !!l && proximo >= 0 && l.periods[proximo] === "open" && agora > venc && agora <= venc + l.graceSecs;
   const atrasado = !!l && proximo >= 0 && l.periods[proximo] === "open" && agora > venc + l.graceSecs;
   const pagoPelaCaucao = !!l && proximo >= 0 && l.periods[proximo] === "covered";
+  // O programa só aceita pagar um mês que já começou (B-A09).
+  const comecaEm = l && proximo >= 0 && l.periods[proximo] === "open" ? H.inicio(l, proximo) - agora : 0;
   const rend = l ? H.rendimento(l, agora) : 0;
   const cofre = l ? fromUnits(l.depositBalance) + rend : 0;
   const cheio = l ? fromUnits(l.depositRequired) + rend : 0;
@@ -75,7 +77,7 @@ export function useInquilino() {
     });
 
   return {
-    d, snap, l, agora, ev, evento, aluguel, taxa, total, proximo, venc, falta, emCarencia, atrasado, pagoPelaCaucao,
+    d, snap, l, agora, ev, evento, aluguel, taxa, total, proximo, venc, falta, emCarencia, atrasado, pagoPelaCaucao, comecaEm,
     rend, cofre, cheio, pagos, saldo, celulas, movConta, movCofre, pronto: !!(snap && d.kp && d.addrs && d.lease),
   };
 }

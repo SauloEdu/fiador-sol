@@ -1,5 +1,5 @@
 {
-  "address": "C6wuEPiedMo2hxs6DEHSxefKAEwRkKdcQucbi1DVg2wV",
+  "address": "AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4",
   "metadata": {
     "name": "fiador",
     "version": "0.1.0",
@@ -1984,6 +1984,26 @@
       "code": 6022,
       "name": "InvalidBadgeAccounts",
       "msg": "Contas do selo ausentes ou erradas"
+    },
+    {
+      "code": 6023,
+      "name": "AgencyIsLandlord",
+      "msg": "A imobiliária não pode ser a proprietária do imóvel"
+    },
+    {
+      "code": 6024,
+      "name": "PeriodTooLong",
+      "msg": "Período maior que o máximo permitido"
+    },
+    {
+      "code": 6025,
+      "name": "PeriodNotStarted",
+      "msg": "Esse mês ainda não começou: não dá para pagar adiantado"
+    },
+    {
+      "code": 6026,
+      "name": "DisputeAlreadyResolved",
+      "msg": "A disputa de danos já foi decidida"
     }
   ],
   "types": [
@@ -2054,6 +2074,20 @@
             "type": "i64"
           },
           {
+            "name": "max_period_secs",
+            "docs": [
+              "Duração máxima de um período. Impede \"meses\" de 100 anos que travam o fundo (B-A26)."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "min_rent_amount",
+            "docs": [
+              "Aluguel mínimo. Impede reputação fabricada com aluguel de centavos (B-A23)."
+            ],
+            "type": "u64"
+          },
+          {
             "name": "grace_secs",
             "docs": [
               "Carência depois do vencimento antes de poder cobrar o atraso."
@@ -2094,6 +2128,23 @@
               "Aluguéis pagos em dia exigidos antes de o pool passar a cobrir."
             ],
             "type": "u8"
+          },
+          {
+            "name": "coverage_growth_bps",
+            "docs": [
+              "Quanto a cobertura do fundo cresce a cada aluguel pago, em pontos-base de",
+              "um aluguel (2500 = ¼ de aluguel por mês; cobertura cheia de 3 aluguéis em 12 meses).",
+              "Tira o lucro do golpe de pagar pouco e dar calote logo (antifraude, camada 1)."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "landlord_deductible_bps",
+            "docs": [
+              "Franquia do proprietário: parte do que falta que o fundo NÃO paga (2000 = 20%).",
+              "Continua sendo dívida da inquilina com o proprietário (`landlord_debt`)."
+            ],
+            "type": "u16"
           },
           {
             "name": "agency_max_pool_bps",
@@ -2147,6 +2198,14 @@
             "type": "i64"
           },
           {
+            "name": "max_period_secs",
+            "type": "i64"
+          },
+          {
+            "name": "min_rent_amount",
+            "type": "u64"
+          },
+          {
             "name": "grace_secs",
             "type": "i64"
           },
@@ -2169,6 +2228,14 @@
           {
             "name": "coverage_waiting_periods",
             "type": "u8"
+          },
+          {
+            "name": "coverage_growth_bps",
+            "type": "u16"
+          },
+          {
+            "name": "landlord_deductible_bps",
+            "type": "u16"
           },
           {
             "name": "agency_max_pool_bps",
@@ -2254,6 +2321,14 @@
             "type": "u8"
           },
           {
+            "name": "coverage_growth_bps",
+            "type": "u16"
+          },
+          {
+            "name": "landlord_deductible_bps",
+            "type": "u16"
+          },
+          {
             "name": "dispute_window_secs",
             "type": "i64"
           },
@@ -2294,6 +2369,14 @@
             "name": "pool_debt",
             "docs": [
               "Quanto o inquilino deve ao pool."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "landlord_debt",
+            "docs": [
+              "Quanto o proprietário deixou de receber em meses cobrados sem dinheiro",
+              "suficiente (caução e cobertura esgotadas). É pago primeiro na quitação (B-A10)."
             ],
             "type": "u64"
           },
@@ -2540,6 +2623,14 @@
           {
             "name": "leases_completed",
             "type": "u32"
+          },
+          {
+            "name": "last_on_time_ts",
+            "docs": [
+              "Hora do último pagamento em dia que contou para a reputação. No máximo",
+              "um por janela de `min_period_secs`, somando todos os contratos (B-A09/B-A23)."
+            ],
+            "type": "i64"
           },
           {
             "name": "bump",

@@ -2,6 +2,74 @@
 
 Da mais nova para a mais antiga. **Toda mudança no software ganha uma entrada aqui** (modelo no README). As entradas anteriores a 2026-09-24 foram reconstruídas a partir das conversas de construção.
 
+## 2026-09-28 · Antifraude no programa: cobertura crescente e franquia
+- **Quem:** Claude Opus 5.5
+- **O quê:** primeira camada antifraude contra o golpe do conluio (B-A24; 06, seção 8.1). O fundo cobre ¼ de aluguel a cada aluguel pago, até 3 aluguéis, e paga 80% do que faltar. A franquia de 20% fica como dívida da inquilina com o proprietário (`landlord_debt`), paga primeiro na quitação. As telas passaram a mostrar a cobertura liberada até agora.
+- **Por quê:** item 4 do painel e prioridade 1 da banca (08, seção 6). Pedido do Saulo para seguir a construção.
+- **Arquivos:**
+  - programa: `programs/fiador/src/{state/{config,lease}.rs,instructions/{initialize,create_lease,claim_default}.rs}`, `programs/fiador/tests/test_lease.rs`;
+  - site: `web/src/idl/*`, `web/src/components/{useDemo.ts,DemoConsole.tsx}`, `web/src/lib/historia.ts`, `web/src/app/{proprietario/{dados.ts,page.tsx},imobiliaria/{page.tsx,contrato/page.tsx},apresentacao/page.tsx}`, `web/scripts/setup-demo.ts`;
+  - Fiador Doc: 00, 01, 02, 04, 05 (D-16), 06, 08.
+- **Verificação:**
+  - `cargo test` 59/59, com 4 testes novos. Um teste antigo (`quem_pediu_saque_ainda_absorve_o_calote`) foi ajustado: pela regra nova, quem nunca pagou não libera cobertura;
+  - `tsc` sem erros;
+  - Solana local reiniciada, `setup` e `e2e.ts` passaram (proprietário R$ 8.000, inquilina R$ 11.520, perfil 3 em dia e 1 calote).
+  - as 9 rotas principais respondem 200;
+  - no navegador, o Palco criou o contrato, guardou a caução e pagou agosto, sem erro no console.
+- **Ajuste na tela da inquilina:** o cartão do aluguel na tela inicial (`/inquilino`) mostra "dá para pagar a partir de… daqui a mm:ss" enquanto o mês não começou, em vez do botão "Pagar com Pix" (`inquilino/dados.ts`: `comecaEm`).
+- **Checklist de segurança:**
+  - nenhuma instrução nova;
+  - o layout de `Config` e `Lease` mudou (nova inicialização em qualquer rede);
+  - conta em `u128`, sem estouro;
+  - a cobertura travada no aceite continua sendo o teto (conservador).
+- **Pendências:**
+  - `pause`, `suspend_agency` e quarentena;
+  - garantia da imobiliária;
+  - commit e push aguardando autorização.
+
+## 2026-09-28 · Primeiro lote de correções de segurança no programa
+- **Quem:** Claude Opus 5.5
+- **O quê:** seis brechas do conselho de segurança corrigidas no programa, cada uma com teste de regressão:
+  - **B-A09:** só paga mês que já começou; a reputação conta no máximo 1 pagamento em dia por janela de tempo, somando todos os contratos (`last_on_time_ts`).
+  - **B-A10:** o que a caução e o fundo não cobrem vira `landlord_debt`, paga primeiro ao proprietário na quitação.
+  - **B-A18:** disputa decidida não reabre.
+  - **B-A23 (em parte):** aluguel mínimo na Config (`min_rent_amount`).
+  - **B-A25 (em parte):** imobiliária não pode ser a proprietária.
+  - **B-A26:** mês máximo na Config (`max_period_secs`, até 35 dias) e vencimento com conta verificada.
+
+  Ajustes no site:
+  - o Palco, a tela de pagar e o console mostram "mês começa em mm:ss" em vez de oferecer pagamento adiantado;
+  - `setup-demo.ts` passa os parâmetros novos (600 s e R$ 100);
+  - `e2e.ts` espera cada mês começar.
+- **Incidente:** a chave do programa tinha sumido antes de hoje. O endereço mudou para `AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4`, e a chave nova foi copiada para `~/Documents/Fiador-backups/` (B-023). Impacto baixo: nunca houve publicação na devnet.
+- **Também:**
+  - primeiro commit do código (`4515e52`);
+  - backup do projeto em `~/Documents/Fiador-backups/backup-antes-correcoes-2026-09-28.tgz`;
+  - `.claude/worktrees/` no `.gitignore`.
+- **Por quê:** item 2 do plano do hackathon (06, seção 5); pedido do Saulo para começar a construção do app.
+- **Arquivos:**
+  - programa: `programs/fiador/src/{errors.rs,lib.rs,state/{config,lease,profile}.rs,instructions/{initialize,create_lease,pay_rent,claim_default,end_lease,dispute}.rs}`, `programs/fiador/tests/test_lease.rs`, `Anchor.toml`;
+  - site: `web/src/idl/*`, `web/src/lib/historia.ts`, `web/src/app/apresentacao/page.tsx`, `web/src/app/inquilino/pagar/page.tsx`, `web/src/components/DemoConsole.tsx`, `web/scripts/{setup-demo,e2e}.ts`, `web/README.md`;
+  - Fiador Doc: 00, 01, 02, 04, 06, 07, 08.
+- **Verificação:**
+  - `cargo test` 55/55 (46 antigos + 8 regressões + invariantes com eventos aleatórios);
+  - build sem aviso de pilha;
+  - `clippy` sem avisos no programa (só avisos de estilo nos testes);
+  - `tsc --noEmit` sem erros;
+  - Solana local reiniciada com o programa novo e `setup` concluído;
+  - `e2e.ts` no relógio real: 3 meses em dia (1 selo), 4º mês cobrado da caução, proprietário com R$ 8.000, acerto final devolvendo R$ 4.000, perfil com 3 em dia e 1 calote;
+  - o primeiro `e2e` falhou com `PeriodNotStarted`, porque o relógio da rede anda segundos atrás do computador. O script passou a esperar pelo relógio da rede (as telas já usavam o relógio da rede).
+- **Checklist de segurança (07, seção 10):**
+  - nenhuma instrução nova;
+  - nenhuma chave nova no navegador;
+  - erros novos no fim da lista, sem mudar os códigos antigos;
+  - o layout das contas mudou (`Config`, `Lease`, `TenantProfile`), o que exige inicializar de novo qualquer rede (feito na local).
+- **Pendências:**
+  - B-A23: trocar contratos iniciados por concluídos;
+  - B-A25: resposta da inquilina à disputa;
+  - próximos itens do plano: cobertura crescente + franquia, `pause`/`suspend_agency`/quarentena, `DEMO_TOKEN`;
+  - push para o GitHub, aguardando autorização.
+
 ## 2026-09-27 · Fiador Doc unificado, plano contra golpes e segurança organizada
 - **Quem:** Claude Opus 5.5
 - **O quê:**

@@ -26,7 +26,7 @@ export default function Carteira() {
   const aluguelAna = l ? fromUnits(l.rent) : 0;
   const pagosAna = l ? l.periods.filter((p) => p === "paid" || p === "settled").length * aluguelAna : 0;
   const cauAna = l ? l.periods.filter((p) => p === "covered").length * aluguelAna : 0;
-  const protAna = l ? fromUnits(l.depositBalance) + (l.paidOnTime + l.paidLate >= 2 ? fromUnits(l.coverageCap - l.poolCoveredTotal) : 0) : 0;
+  const protAna = l ? fromUnits(l.depositBalance) + fromUnits(H.coberturaDoFundo(l)) : 0;
   const corSit = m.tom === "perigo" ? COR.verm : m.tom === "alerta" ? COR.ambar : m.tom === "ok" ? COR.verde : COR.tinta;
   const fita: [string, string, boolean][] = [
     ["Aluguéis do contrato real", reais(aluguelAna * (l?.totalPeriods ?? 0), false), false],

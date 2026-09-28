@@ -33,6 +33,8 @@ export const Mes = (i: number) => {
 };
 
 export const vencimento = (l: LeaseView, i: number) => l.startTs + l.periodSecs * (i + 1);
+/** Início do mês `i`: o programa só aceita o pagamento a partir daqui (B-A09). */
+export const inicio = (l: LeaseView, i: number) => vencimento(l, i) - l.periodSecs;
 
 export type EstadoCelula = "pago" | "caucao" | "quitado" | "atual" | "carencia" | "atrasado" | "vazio";
 
@@ -54,6 +56,20 @@ export function celula(l: LeaseView, i: number, agora: number): EstadoCelula {
 export function proximoAPagar(l: LeaseView) {
   return l.periods.findIndex((p) => p === "open" || p === "covered");
 }
+
+/**
+ * Cobertura do fundo liberada até agora (mesma regra do programa, `Lease::coverage_available`):
+ * nada antes da espera; depois, uma fração do aluguel por aluguel pago, até o teto,
+ * menos o que o fundo já pagou. Em unidades de tBRL.
+ */
+export function coberturaDoFundo(l: LeaseView) {
+  const pagos = l.paidOnTime + l.paidLate;
+  if (pagos < l.coverageWaitingPeriods) return 0;
+  const liberada = Math.min(Math.floor((l.rent * l.coverageGrowthBps * pagos) / 10_000), l.coverageCap);
+  return Math.max(0, liberada - l.poolCoveredTotal);
+}
+/** Parte do que faltar que o fundo paga (fora da franquia do proprietário), em %. */
+export const partDoFundo = (l: LeaseView) => 100 - l.landlordDeductibleBps / 100;
 
 export const taxa = (l: LeaseView) => Math.floor((l.rent * l.premiumBps) / 10_000);
 

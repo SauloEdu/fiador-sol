@@ -1,6 +1,6 @@
 # Arquitetura do Fiador.sol
 
-Atualizado em 2026-09-24. Descreve o software **como ele existe hoje** no repositório, inclusive o que ainda não está protegido (seção 9). Quando este texto e o código divergirem, vale o código, e a divergência vai para [04-BUGS.md](04-BUGS.md).
+Atualizado em 2026-09-28. Descreve o software **como ele existe hoje** no repositório, inclusive o que ainda não está protegido (seção 9). Quando este texto e o código divergirem, vale o código, e a divergência vai para [04-BUGS.md](04-BUGS.md).
 
 ## 1. Em uma frase
 
@@ -43,9 +43,9 @@ São três camadas:
 
 ## 3. Programa na Solana (`programs/fiador/`)
 
-- **Tecnologia:** Anchor 1.2 (Rust), Solana CLI 4.2 (Anza). Endereço do programa: `C6wuEPiedMo2hxs6DEHSxefKAEwRkKdcQucbi1DVg2wV`. A chave fica em `target/deploy/fiador-keypair.json`, fora do git; se perder, o endereço muda.
+- **Tecnologia:** Anchor 1.2 (Rust), Solana CLI 4.2 (Anza). Endereço do programa: `AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4` (desde 28/09; o anterior, `C6wu…`, foi perdido com a chave, ver B-023). Cópia da chave em `~/Documents/Fiador-backups/`. A chave fica em `target/deploy/fiador-keypair.json`, fora do git; se perder, o endereço muda.
 - **Organização:** `src/lib.rs` (lista das 16 instruções), `src/instructions/` (uma instrução por arquivo; as do fundo ficam em `pool_ops.rs`), `src/state/` (formato das contas), `src/errors.rs` (mensagens de erro em português), `src/utils.rs` (transferência de tokens).
-- **Testes:** `programs/fiador/tests/test_lease.rs`, 46 testes com LiteSVM 0.16 e relógio simulado. Rodar com `cargo test`. As brechas da seção 9 **não** estão na suíte. Algumas têm prova de conceito em `Fiador Doc/provas/` (11 testes que passam hoje, confirmando a brecha), para colar na suíte e inverter depois da correção.
+- **Testes:** `programs/fiador/tests/test_lease.rs`, 55 testes com LiteSVM 0.16 e relógio simulado, incluindo as regressões das brechas corrigidas em 28/09 e um teste de invariantes com eventos aleatórios. Rodar com `cargo test`. As brechas ainda abertas da seção 9 **não** estão na suíte. Algumas têm prova de conceito em `Fiador Doc/provas/` (11 testes que passam hoje, confirmando a brecha), para colar na suíte e inverter depois da correção.
 
 ### 3.1 Contas (onde os dados ficam)
 
@@ -69,8 +69,8 @@ São três camadas:
 | Carência | 5 dias | 20 s |
 | Taxa de garantia | 8% de cada aluguel, vai ao fundo e não volta | igual |
 | Caução | 3, 2 ou 1 aluguel, conforme a reputação | igual |
-| Fundo cobre | depois de 2 aluguéis pagos no contrato (em dia **ou atrasados**; quitações contam), até 3 aluguéis e no máximo R$ 15.000 por contrato | igual |
-| Aluguel e duração do "mês" | só há mínimo (aluguel > 0; mês ≥ 28 dias). **Não há máximo** (B-A23, B-A26) | mês ≥ 60 s |
+| Fundo cobre | depois de 2 aluguéis pagos no contrato (em dia **ou atrasados**; quitações contam). A cobertura **cresce ¼ de aluguel a cada aluguel pago** (`coverage_growth_bps` = 2500) até 3 aluguéis e no máximo R$ 15.000 por contrato, e o fundo paga **80%** do que faltar (franquia de 20% do proprietário, `landlord_deductible_bps` = 2000). O resto vira `landlord_debt`. Desde 28/09 | igual |
+| Aluguel e duração do "mês" | aluguel ≥ `min_rent_amount`; mês entre 28 e 35 dias (`max_period_secs` ≤ 35 dias) | aluguel ≥ R$ 100; mês entre 60 e 600 s |
 | Limite por imobiliária | a cobertura travada por uma imobiliária não passa de 50% do fundo, **medido no aceite de cada contrato** | igual (`agency_max_pool_bps = 5000`) |
 | Janela de danos | 15 dias depois do fim | 30 s |
 | Aviso prévio de saque do fundo | 7 dias | 30 s |
@@ -117,12 +117,12 @@ Quem pode chamar cada passagem:
 | Instrução | Quem assina | Condição conferida pelo programa |
 |---|---|---|
 | `initialize` | **qualquer carteira** (a primeira vira admin) | nada liga o admin à autoridade de atualização do programa (B-A21) |
-| `create_lease` | imobiliária ativa + proprietário | período ≥ mínimo, 1 a 36 meses, proprietário ≠ inquilina e imobiliária ≠ inquilina. **Não confere imobiliária ≠ proprietário** (B-A25) |
+| `create_lease` | imobiliária ativa + proprietário | período ≥ mínimo, 1 a 36 meses, proprietário ≠ inquilina e imobiliária ≠ inquilina. **imobiliária ≠ proprietário** (desde 28/09, B-A25); aluguel ≥ mínimo; mês ≤ máximo |
 | `accept_lease` | inquilina | status `pending`, imobiliária ativa, fundo com cobertura livre, limite de 50% |
-| `pay_rent` | inquilina | status `active`/`defaulted`; paga o **primeiro** mês `open` ou `covered`, **sem conferir se o mês já começou** (B-A09) |
+| `pay_rent` | inquilina | status `active`/`defaulted`; paga o **primeiro** mês `open` ou `covered`, **só se o mês já começou** (desde 28/09, B-A09); na reputação, no máximo 1 pagamento em dia por janela de tempo |
 | `claim_default` | qualquer um | primeiro mês `open` vencido além da carência |
 | `end_lease` | qualquer um | último vencimento passou e nenhum mês `open` |
-| `open_dispute` | proprietário | status `ending`, dentro da janela, valor ≤ caução restante; pode ser reaberta depois de decidida (B-A18) |
+| `open_dispute` | proprietário | status `ending`, dentro da janela, valor ≤ caução restante; não reabre depois de decidida (desde 28/09, B-A18) |
 | `resolve_dispute` | imobiliária do contrato | status `disputed`, prêmio ≤ pedido e ≤ caução. A inquilina não assina nem responde (B-A25) |
 | `close_lease` | qualquer um | status `ending` e (janela vencida ou disputa decidida) |
 
@@ -134,8 +134,8 @@ Depois do `end_lease`, `pay_rent` não é mais aceito: um mês `covered` não po
 |---|---|---|---|
 | `accept_lease` | carteira da inquilina | cofre do contrato | caução; trava `coverage_cap` no fundo e na imobiliária |
 | `pay_rent` de mês `open` | carteira da inquilina | proprietário (aluguel) + cofre do pool (8%) | em dia se `agora ≤ vencimento` |
-| `claim_default` | cofre do contrato, depois cofre do pool | proprietário | fundo só entra após 2 pagos e até o teto; o mês vira `covered` **mesmo se nada foi pago** (B-A10) |
-| `pay_rent` de mês `covered` | carteira da inquilina | cofre do pool (dívida com o fundo + 8%), o resto ao cofre do contrato | o proprietário nunca recebe de novo por esse mês |
+| `claim_default` | cofre do contrato, depois cofre do pool | proprietário | fundo só entra após 2 pagos e até o teto; o que nenhum dos dois cobrir vira `landlord_debt` (desde 28/09, B-A10) |
+| `pay_rent` de mês `covered` | carteira da inquilina | primeiro o proprietário (`landlord_debt`), depois o cofre do pool (dívida com o fundo + 8%), o resto ao cofre do contrato | o proprietário nunca recebe duas vezes pelo mesmo mês |
 | `resolve_dispute` | cofre do contrato | proprietário | só alcança caução que sobrou; o fundo não perde prioridade (invariante I7, abaixo) |
 | `close_lease` | cofre do contrato; reserva de rendimento | inquilina (sobra + rendimento) | destrava a cobertura não usada. O código tem um passo "caução restante repõe o fundo", mas ele **nunca movimenta dinheiro** (B-017). A dívida que sobra com o fundo fica registrada no `Lease` e ninguém a cobra (B-A24) |
 
@@ -253,7 +253,7 @@ O que depende de pessoas ou de chaves:
 
 - A chave de atualização do programa é da equipe; em produção, o plano é um multisig.
 - A chave do admin é uma só para emissão de tBRL, credenciamento, selo e keeper (seção 4). Em produção, o plano é separar em carteiras diferentes (07-SEGURANCA-SOFTWARE, seção 7).
-- A imobiliária decide as disputas sem prazo (B-A02), sem ouvir a inquilina e podendo ser a própria proprietária (B-A25), e não pode ser descredenciada (B-A14).
+- A imobiliária decide as disputas sem prazo (B-A02), sem ouvir a inquilina (B-A25; a imobiliária já não pode ser a proprietária desde 28/09), e não pode ser descredenciada (B-A14).
 - A primeira carteira que chamar `initialize` vira admin para sempre (B-A21).
 - O programa não emite eventos: não há como monitorar nem investigar (B-A38).
 - As carteiras de teste do navegador não valem nada fora da rede de teste.
@@ -268,23 +268,23 @@ Gravidade: 🔴 perda de dinheiro ou regra central derrubada · 🟠 alta · �
 
 | Bug | Gravidade | O problema, em uma linha |
 |---|---|---|
-| B-A09 | 🔴 · prova | Pagar adiantado conta como "em dia" e libera a cobertura do fundo na hora. |
-| B-A10 | 🔴 · prova | Mês cobrado sem dinheiro: o proprietário fica sem receber, e o pagamento posterior volta para a inquilina. |
+| ~~B-A09~~ | ✅ 28/09 (B-019) | Pagar adiantado conta como "em dia" e libera a cobertura do fundo na hora. |
+| ~~B-A10~~ | ✅ 28/09 (B-020) | Mês cobrado sem dinheiro: o proprietário fica sem receber, e o pagamento posterior volta para a inquilina. |
 | B-A12 | 🔴 · prova | Pedido de saque não expira: o investidor sai antes do calote. |
 | B-A21 | 🔴 devnet/produção | `initialize` sem dono: quem chamar primeiro vira admin para sempre. |
-| B-A23 | 🔴 demo · 🟠 produção · prova | Reputação máxima e 3 selos com aluguel de 1 unidade. |
+| B-A23 | 🟠 · em parte (aluguel mínimo e 1 por janela feitos) | Reputação máxima e 3 selos com aluguel de 1 unidade. |
 | B-A24 | 🔴 produção | Conluio com imobiliária credenciada lucra ~R$ 14.200 por contrato à custa do fundo. |
-| B-A26 | 🔴 demo · 🟠 produção · prova | "Mês" sem máximo: fundo travado para sempre; na demo, qualquer um trava 100% do fundo. |
+| ~~B-A26~~ | ✅ 28/09 (B-022) | "Mês" sem máximo: fundo travado para sempre; na demo, qualquer um trava 100% do fundo. |
 | B-A28 | ⚪ demo · 🔴 produção | Mint sem validação: extensões do Token-2022 e congelamento travam ou esvaziam cofres. |
 | B-A13 | 🟠 | Calote só entra na reputação no fechamento; contratos paralelos com caução mínima. |
 | B-A14 | 🟠 · 🔴 produção | Sem pausa, sem descredenciar, sem trocar o admin. |
 | B-A16 | 🟠 | Não dá para quitar depois do fim do prazo; usar a caução vira calote eterno. |
 | B-A17 | 🟠 | Fundo zerado: divisão por zero e ninguém aporta mais. |
-| B-A25 | 🟠 · 🔴 produção | Imobiliária pode ser a proprietária e julgar a própria disputa; a inquilina não tem voz. |
+| B-A25 | 🟠 · em parte (imobiliária ≠ proprietário feito) | Imobiliária pode ser a proprietária e julgar a própria disputa; a inquilina não tem voz. |
 | B-A27 | 🟠 · 🔴 produção | Sem provisão: o fundo registra a perda tarde, e quem sai antes deixa o prejuízo para os outros. |
 | B-A30 | 🟠 | Garantia acaba no prazo, não na entrega das chaves; sem rescisão, cancelamento nem aviso de garantia esgotada. |
 | B-A31 | 🟠 | Cobertura travada ignora o prazo restante; contratos curtos pagam por proteção inútil. |
-| B-A18 | 🟡 · prova | Disputa decidida pode ser reaberta. |
+| ~~B-A18~~ | ✅ 28/09 (B-021) | Disputa decidida pode ser reaberta. |
 | B-A29 | 🟡 | Selo trocável e congelável trava pagamentos. |
 | B-A38 | 🟡 · 🟠 produção | Nenhum evento on-chain. |
 
@@ -313,11 +313,13 @@ Já registrados antes e ligados a esta lista: B-A02 (disputa sem prazo, 🟠) e 
 
 1. B-A37: commit e backup cifrado das chaves (a parte do `.gitignore`, B-A36, foi feita em 2026-09-27).
 2. No programa, pouco código e cada item com o teste de `provas/` invertido:
-   - `agency ≠ landlord` (B-A25);
-   - período máximo e vencimento com conta verificada (B-A26);
-   - aluguel mínimo e 1 pagamento em dia por janela de tempo (B-A23, B-A09);
-   - `landlord_debt` (B-A10);
-   - disputa não reabre (B-A18).
+   - ✅ `agency ≠ landlord` (B-A25);
+   - ✅ período máximo e vencimento com conta verificada (B-A26);
+   - ✅ aluguel mínimo e 1 pagamento em dia por janela de tempo (B-A23, B-A09);
+   - ✅ `landlord_debt` (B-A10);
+   - ✅ disputa não reabre (B-A18).
+
+   Feitos em 2026-09-28.
 3. `DEMO_TOKEN` nas rotas que usam a chave do admin, RPC dedicado e fundo publicado de novo no dia da banca (B-A08, B-A19, B-A33, B-A34).
 4. Antes da devnet: `initialize` preso à autoridade de atualização (B-A21), chaves separadas (B-A22), keeper por cron (B-A15, B-A32), configuração por variáveis de ambiente (B-A35).
 5. Depois: provisão e saque pelo menor valor da cota (B-A27, B-A12), piso do fundo (B-A17), contadores no perfil (B-A13), pausa (B-A14), eventos (B-A38).

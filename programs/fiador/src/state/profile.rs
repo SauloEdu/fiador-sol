@@ -12,6 +12,9 @@ pub struct TenantProfile {
     /// Contratos iniciados (aceitos) por este inquilino.
     pub leases_started: u32,
     pub leases_completed: u32,
+    /// Hora do último pagamento em dia que contou para a reputação. No máximo
+    /// um por janela de `min_period_secs`, somando todos os contratos (B-A09/B-A23).
+    pub last_on_time_ts: i64,
     pub bump: u8,
 }
 

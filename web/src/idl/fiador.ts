@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/fiador.json`.
  */
 export type Fiador = {
-  "address": "C6wuEPiedMo2hxs6DEHSxefKAEwRkKdcQucbi1DVg2wV",
+  "address": "AxA7odS9fftDNCmx8QaqYiiU79mNEemTcper2VWswjp4",
   "metadata": {
     "name": "fiador",
     "version": "0.1.0",
@@ -1990,6 +1990,26 @@ export type Fiador = {
       "code": 6022,
       "name": "invalidBadgeAccounts",
       "msg": "Contas do selo ausentes ou erradas"
+    },
+    {
+      "code": 6023,
+      "name": "agencyIsLandlord",
+      "msg": "A imobiliária não pode ser a proprietária do imóvel"
+    },
+    {
+      "code": 6024,
+      "name": "periodTooLong",
+      "msg": "Período maior que o máximo permitido"
+    },
+    {
+      "code": 6025,
+      "name": "periodNotStarted",
+      "msg": "Esse mês ainda não começou: não dá para pagar adiantado"
+    },
+    {
+      "code": 6026,
+      "name": "disputeAlreadyResolved",
+      "msg": "A disputa de danos já foi decidida"
     }
   ],
   "types": [
@@ -2060,6 +2080,20 @@ export type Fiador = {
             "type": "i64"
           },
           {
+            "name": "maxPeriodSecs",
+            "docs": [
+              "Duração máxima de um período. Impede \"meses\" de 100 anos que travam o fundo (B-A26)."
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "minRentAmount",
+            "docs": [
+              "Aluguel mínimo. Impede reputação fabricada com aluguel de centavos (B-A23)."
+            ],
+            "type": "u64"
+          },
+          {
             "name": "graceSecs",
             "docs": [
               "Carência depois do vencimento antes de poder cobrar o atraso."
@@ -2100,6 +2134,23 @@ export type Fiador = {
               "Aluguéis pagos em dia exigidos antes de o pool passar a cobrir."
             ],
             "type": "u8"
+          },
+          {
+            "name": "coverageGrowthBps",
+            "docs": [
+              "Quanto a cobertura do fundo cresce a cada aluguel pago, em pontos-base de",
+              "um aluguel (2500 = ¼ de aluguel por mês; cobertura cheia de 3 aluguéis em 12 meses).",
+              "Tira o lucro do golpe de pagar pouco e dar calote logo (antifraude, camada 1)."
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "landlordDeductibleBps",
+            "docs": [
+              "Franquia do proprietário: parte do que falta que o fundo NÃO paga (2000 = 20%).",
+              "Continua sendo dívida da inquilina com o proprietário (`landlord_debt`)."
+            ],
+            "type": "u16"
           },
           {
             "name": "agencyMaxPoolBps",
@@ -2153,6 +2204,14 @@ export type Fiador = {
             "type": "i64"
           },
           {
+            "name": "maxPeriodSecs",
+            "type": "i64"
+          },
+          {
+            "name": "minRentAmount",
+            "type": "u64"
+          },
+          {
             "name": "graceSecs",
             "type": "i64"
           },
@@ -2175,6 +2234,14 @@ export type Fiador = {
           {
             "name": "coverageWaitingPeriods",
             "type": "u8"
+          },
+          {
+            "name": "coverageGrowthBps",
+            "type": "u16"
+          },
+          {
+            "name": "landlordDeductibleBps",
+            "type": "u16"
           },
           {
             "name": "agencyMaxPoolBps",
@@ -2260,6 +2327,14 @@ export type Fiador = {
             "type": "u8"
           },
           {
+            "name": "coverageGrowthBps",
+            "type": "u16"
+          },
+          {
+            "name": "landlordDeductibleBps",
+            "type": "u16"
+          },
+          {
             "name": "disputeWindowSecs",
             "type": "i64"
           },
@@ -2300,6 +2375,14 @@ export type Fiador = {
             "name": "poolDebt",
             "docs": [
               "Quanto o inquilino deve ao pool."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "landlordDebt",
+            "docs": [
+              "Quanto o proprietário deixou de receber em meses cobrados sem dinheiro",
+              "suficiente (caução e cobertura esgotadas). É pago primeiro na quitação (B-A10)."
             ],
             "type": "u64"
           },
@@ -2546,6 +2629,14 @@ export type Fiador = {
           {
             "name": "leasesCompleted",
             "type": "u32"
+          },
+          {
+            "name": "lastOnTimeTs",
+            "docs": [
+              "Hora do último pagamento em dia que contou para a reputação. No máximo",
+              "um por janela de `min_period_secs`, somando todos os contratos (B-A09/B-A23)."
+            ],
+            "type": "i64"
           },
           {
             "name": "bump",
