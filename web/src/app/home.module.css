@@ -1,0 +1,57 @@
+/* Página inicial (canvas: "Página inicial"). */
+.pagina { background: var(--mesa); }
+.topo { max-width: 1296px; margin: 0 auto; min-height: 84px; padding: 0 24px; display: flex; align-items: center; gap: 24px; }
+.logo { font-size: 23px; font-weight: 800; letter-spacing: -0.025em; color: var(--tinta); text-decoration: none; }
+.logo span { color: var(--caneta); }
+.nav { margin-left: auto; display: flex; gap: 20px; align-items: center; }
+.nav a { font-size: 15px; font-weight: 600; text-decoration: none; color: var(--tinta); min-height: 44px; display: inline-flex; align-items: center; }
+.hero { max-width: 1296px; margin: 0 auto; padding: 32px 24px 72px; display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 56px; align-items: center; }
+.h1 { margin: 0; font-size: clamp(56px, 8vw, 104px); line-height: 0.92; letter-spacing: -0.045em; font-weight: 820; }
+.lede { margin: 26px 0 0; font-size: 21px; line-height: 1.45; color: var(--graf); max-width: 32em; }
+.acoes { display: flex; gap: 12px; margin-top: 30px; flex-wrap: wrap; }
+.acoes a { width: auto; }
+.numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin: 36px 0 0; padding-top: 22px; border-top: 1px solid #c9d0db; }
+.numeros div { display: flex; flex-direction: column; gap: 4px; }
+.numeros dd { margin: 0; order: 1; font-size: 32px; font-weight: 800; letter-spacing: -0.03em; }
+.numeros dt { order: 2; font-size: 15px; color: var(--graf); line-height: 1.4; }
+.celular { padding: 10px; border-radius: 50px; background: #0e1322; box-shadow: 0 50px 80px -40px rgba(20,30,54,0.6); justify-self: center; }
+.celular iframe { display: block; width: 360px; height: 720px; border: 0; border-radius: 40px; background: var(--mesa); }
+.faixa { background: #fff; }
+.secao { max-width: 1296px; margin: 0 auto; padding: 90px 24px; display: flex; flex-direction: column; gap: 40px; }
+.h2 { margin: 0; font-size: clamp(36px, 5vw, 56px); line-height: 1; letter-spacing: -0.035em; font-weight: 800; max-width: 16ch; }
+.como { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 56px; align-items: center; }
+.passos { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 26px; }
+.passos li { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 18px; align-items: start; }
+.passos b { font-size: 20px; display: block; margin-bottom: 4px; }
+.passos p { margin: 0; font-size: 16px; line-height: 1.45; color: var(--graf); }
+.publicos { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 28px; }
+.publicos a { text-decoration: none; color: var(--tinta); display: flex; flex-direction: column; gap: 10px; padding-top: 18px; border-top: 2px solid var(--tinta); }
+.publicos b { font-size: 20px; }
+.publicos span { font-size: 16px; color: var(--graf); line-height: 1.45; }
+.publicos em { font-style: normal; font-size: 15px; font-weight: 650; color: var(--caneta); }
+.seguranca { max-width: 1248px; margin: 0 auto; border-radius: 28px; background: var(--tinta); color: #fff; padding: 64px 48px; display: grid; grid-template-columns: 340px repeat(3, minmax(0, 1fr)); gap: 36px; }
+.seguranca h2 { margin: 0; font-size: 36px; letter-spacing: -0.03em; }
+.seguranca p { margin: 8px 0 0; color: var(--claro-sobre-tinta); font-size: 16px; line-height: 1.45; }
+.seguranca b { display: block; font-size: 18px; margin: 10px 0 6px; }
+.faq { background: #fff; border-radius: 18px; overflow: hidden; }
+.faq details { padding: 4px 20px; border-bottom: 1px solid var(--linha); }
+.faq summary { min-height: 52px; display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 16px; font-weight: 650; cursor: pointer; list-style: none; }
+.faq summary::after { content: "+"; font-size: 22px; font-weight: 400; color: var(--caneta); }
+.faq details[open] summary::after { content: "−"; }
+.faq p { margin: 0 0 16px; font-size: 15px; line-height: 1.5; color: var(--graf); }
+.rodape { max-width: 1248px; margin: 40px auto 0; padding: 28px 24px 48px; border-top: 1px solid #c9d0db; display: grid; grid-template-columns: 1.4fr repeat(3, minmax(0, 1fr)); gap: 28px; font-size: 14px; color: var(--graf); }
+.rodape div { display: flex; flex-direction: column; gap: 6px; }
+.rodape b { color: var(--tinta); }
+.rodape a { padding: 3px 0; }
+@media (max-width: 960px) {
+  .hero, .como { grid-template-columns: minmax(0, 1fr); }
+  .publicos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .seguranca { grid-template-columns: minmax(0, 1fr); padding: 40px 24px; margin: 0 16px; }
+  .rodape { grid-template-columns: minmax(0, 1fr); }
+  .nav a:not(:last-child) { display: none; }
+}
+@media (max-width: 560px) {
+  .numeros { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .publicos { grid-template-columns: minmax(0, 1fr); }
+  .celular iframe { width: 300px; height: 600px; }
+}

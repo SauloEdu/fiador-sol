@@ -1,0 +1,75 @@
+/* Internet banking empresarial da imobiliária (canvas: páginas "Imobiliária"). */
+.casca { display: flex; min-height: 100dvh; background: var(--mesa); }
+.lateral {
+  width: 248px; flex: none; background: var(--tinta); color: var(--papel); padding: 26px 12px;
+  display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100dvh;
+}
+.logo { font-size: 20px; font-weight: 780; letter-spacing: -0.02em; padding: 0 14px; color: #fff; text-decoration: none; }
+.logo span { color: #9fb0f2; }
+.empresa { display: flex; flex-direction: column; gap: 2px; padding: 4px 14px 22px; }
+.empresa b { font-size: 14px; }
+.empresa span { font-size: 12px; color: #b4bdce; }
+.item {
+  display: flex; align-items: center; gap: 12px; min-height: 46px; padding: 0 14px; border-radius: 12px;
+  color: #c9cfdb; text-decoration: none; font-size: 15px; font-weight: 500;
+}
+.item:hover { color: #fff; background: rgba(255,255,255,0.06); }
+.itemAtivo { color: #fff; background: rgba(255,255,255,0.12); font-weight: 650; }
+.reserva { margin-top: auto; margin-inline: 4px; padding: 16px; border-radius: 16px; background: rgba(255,255,255,0.07); display: flex; flex-direction: column; gap: 6px; }
+.reserva span { font-size: 13px; color: #b4bdce; }
+.reserva b { font-size: 19px; font-variant-numeric: tabular-nums; }
+.corpo { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topo {
+  height: 68px; padding: 0 40px; display: flex; align-items: center; gap: 20px; background: #fff; border-bottom: 1px solid var(--linha);
+  position: sticky; top: 0; z-index: 5;
+}
+.busca { flex: 1; max-width: 420px; display: flex; align-items: center; gap: 10px; padding: 0 14px; height: 44px; border-radius: 12px; background: var(--mesa); color: var(--graf); }
+.busca input { flex: 1; border: 0; background: transparent; font: inherit; font-size: 15px; color: var(--tinta); min-width: 0; }
+.acesso { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--graf); margin-left: auto; }
+.usuaria { display: flex; align-items: center; gap: 10px; }
+.usuaria > span:first-child { width: 36px; height: 36px; border-radius: 50%; background: var(--tinta); color: var(--papel); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+.main { padding: 30px 40px 48px; display: flex; flex-direction: column; gap: 20px; max-width: 1240px; width: 100%; }
+.tituloLinha { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; }
+.titulo { margin: 0; font-size: 38px; letter-spacing: -0.03em; font-weight: 750; }
+.migalhas { display: flex; align-items: center; gap: 8px; color: var(--graf); font-size: 14px; }
+.migalhas a { font-weight: 600; text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; }
+
+.fita { display: grid; align-items: end; }
+.fita > div { display: flex; flex-direction: column; gap: 4px; padding: 0 16px; }
+.fita > div + div { border-left: 1px dashed #a9b2c0; }
+.fita span { font-size: 13px; color: var(--graf); }
+.fita b { font-size: 19px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; white-space: nowrap; }
+.fitaTotal b { font-size: 22px; font-weight: 800; border-bottom: 3px double var(--tinta); }
+
+.tabelaCaixa { background: var(--papel); border-radius: 16px; padding: 4px 8px 8px; overflow-x: auto; }
+.tabela { width: 100%; border-collapse: collapse; }
+.tabela caption { text-align: left; padding: 10px 12px 6px; font-size: 14px; color: var(--graf); }
+.tabela th { text-align: left; font-size: 13px; font-weight: 650; color: var(--graf); padding: 10px 12px; border-bottom: 2px solid var(--tinta); white-space: nowrap; }
+.tabela td { padding: 12px; border-bottom: 1px dotted #a9b2c0; font-size: 15px; vertical-align: middle; }
+.tabela tr:last-child td { border-bottom: 0; }
+.dir { text-align: right !important; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.imovel { display: flex; flex-direction: column; gap: 2px; color: var(--tinta); text-decoration: none; min-height: 44px; justify-content: center; }
+.imovel b { font-size: 15px; }
+.imovel span { font-size: 14px; color: var(--graf); }
+.exemplo { opacity: 0.72; }
+.mini { display: grid; grid-template-columns: repeat(12, 16px); gap: 2px; }
+.mini > span { width: 16px; height: 20px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+
+.grade2 { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 28px; align-items: start; }
+.campo { display: flex; flex-direction: column; gap: 7px; font-size: 14px; font-weight: 650; }
+.campo input, .campo select { font: inherit; font-size: 16px; font-weight: 500; padding: 12px 14px; border-radius: 12px; border: 1.5px solid var(--borda-campo); background: #fff; color: var(--tinta); min-width: 0; }
+.campo small { font-size: 13px; font-weight: 400; color: var(--graf); }
+.etapas { margin: 0; padding: 0; list-style: none; display: flex; align-items: center; flex-wrap: wrap; gap: 0; }
+.etapas li { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 650; color: var(--graf); }
+.etapas li > span:first-child { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; }
+.traco { width: 28px; height: 2px; background: #b7c0cd; margin: 0 10px; }
+
+@media (max-width: 900px) {
+  .lateral { display: none; }
+  .topo { padding: 0 16px; }
+  .acesso { display: none; }
+  .main { padding: 20px 16px 40px; }
+  .grade2 { grid-template-columns: minmax(0, 1fr); }
+  .fita { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; row-gap: 14px; }
+  .fita > div + div { border-left: 0; }
+}

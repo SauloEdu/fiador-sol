@@ -13,15 +13,17 @@ Garantia locatícia on-chain na Solana: caução via Pix que rende, fiador colet
    - Atraso > X dias: proprietário recebe automaticamente.
    - Fim do contrato sem pendência: caução volta ao inquilino com rendimento.
 2. **Fiador coletivo** — pool onde investidores garantem vários inquilinos e recebem a taxa que hoje vai para a seguradora.
-3. **Reputação de bom pagador** — selo on-chain intransferível (cNFT) por mês pago em dia; histórico reduz a caução no próximo aluguel.
+3. **Reputação de bom pagador** — selo on-chain intransferível (Token-2022) por mês pago em dia; histórico reduz a caução no próximo aluguel.
 
 ## MVP do hackathon
-- [ ] Programa Anchor: `init_lease`, `deposit`, `pay_rent`, `claim_default`, `release`
-- [ ] Pool de garantia: `stake`, `unstake`, `cover_default`
-- [ ] Selo de reputação (cNFT via Bubblegum)
-- [ ] On-ramp Pix (mock na devnet)
-- [ ] Painel da imobiliária (Next.js + wallet adapter)
-- [ ] Demo: simular atraso → proprietário recebe na hora
+Arquitetura completa em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
+- [x] Programa Anchor: 16 instruções, 46 testes (`cargo test`)
+- [x] Pool de garantia com aviso prévio de saque
+- [x] Perfil de reputação + selo Token-2022 intransferível
+- [x] Pix simulado + keeper de cobrança automático
+- [x] Site da demo (Next.js): imobiliária, inquilino, proprietário, investidor, reputação pública — ver [web/README.md](web/README.md)
+- [x] Demo: atraso → keeper cobra → proprietário recebe na hora
+- [ ] Publicar na devnet
 
 ## Ponto jurídico
 Lei 8.245/91, art. 38 §2: caução em dinheiro vai para poupança. Enquadramento proposto:

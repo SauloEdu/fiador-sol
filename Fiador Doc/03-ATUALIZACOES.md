@@ -1,0 +1,127 @@
+# Histórico de atualizações
+
+Da mais nova para a mais antiga. **Toda mudança no software ganha uma entrada aqui** (modelo no README). As entradas anteriores a 2026-09-24 foram reconstruídas a partir das conversas de construção.
+
+## 2026-09-27 · Fiador Doc unificado, plano contra golpes e segurança organizada
+- **Quem:** Claude Opus 5.5
+- **O quê:**
+  - **Unificação:** o trabalho de segurança de 24/09, feito numa cópia isolada (worktree `arquitetura-brechas-aca3c2`, que não tinha o código), foi trazido para a pasta principal: 00-PAINEL, 06, 07, `provas/`, versões ampliadas de 01 a 05 e a skill `conselho-seguranca`. Cópia de segurança da versão anterior no rascunho da sessão.
+  - **Documento novo `08-RESPOSTA-A-GOLPE.md`:** 8 golpes esperados, camadas de prevenção (hoje × alvo), sinais de alerta, roteiro de resposta em 6 passos (conter, preservar provas, investigar, agir e comunicar, recuperar, aprender), roteiros por tipo de golpe, ordem de quem arca com a perda e respostas para a banca.
+  - **Organização:** mapa por assunto no README; painel com a linha de golpes e a pergunta "e se acontecer mesmo assim?"; 01 e 07 apontam para 06, 07 e 08 em vez do `docs/SEGURANCA.md`; `CLAUDE.md` e `AGENTS.md` citam 00, 06, 07 e 08 e a skill; `docs/ARQUITETURA.md` e `docs/SEGURANCA.md` marcados como históricos.
+  - **Segurança:** `.env*`, `*keypair*.json` e `id.json` no `.gitignore` (B-A36 → B-018, corrigido); `docs/SEGURANCA.md` com o quadro "O que não vale mais" e marcações nos itens errados (B-A41, em andamento).
+- **Por quê:** pedido do Saulo para organizar os arquivos, melhorar a parte de segurança e ter pronto como o golpe é resolvido e o que fazer se ele acontecer.
+- **Arquivos:** `Fiador Doc/*`, `.claude/skills/conselho-seguranca/**`, `.gitignore`, `web/.gitignore`, `docs/SEGURANCA.md`, `docs/ARQUITETURA.md`, `CLAUDE.md`, `AGENTS.md`.
+- **Verificação:** `git check-ignore` confirma que `web/.env`, `.env` e o keypair do programa são ignorados e que `.env.example` continua versionável; nenhum segredo no `git status`; links internos do Fiador Doc conferidos. Nenhum código do programa ou do site foi alterado.
+- **Pendências:**
+  - no programa: cobertura crescente e franquia, `agency ≠ landlord`, `pause` e `suspend_agency`, quarentena (08, seção 6);
+  - commit e backup das chaves (B-A37), com autorização do Saulo;
+  - reescrever ou aposentar `docs/SEGURANCA.md` (B-A41).
+
+## 2026-09-24 · Arquitetura de segurança do software, antifraude e painel
+- **Quem:** Claude Opus 5.5
+- **O quê:**
+  - **Verificação de software feita hoje:**
+    - `cargo test` 46/46 numa cópia limpa (o `.so` testado é mais novo que todo o código-fonte);
+    - `cargo clippy` sem avisos; `tsc --noEmit` sem erros;
+    - `npm audit --omit=dev`: 12 falhas conhecidas (5 altas, 7 médias), todas em dependências indiretas das bibliotecas da Solana;
+    - nenhum segredo no código nem no histórico do git; nenhum cabeçalho de segurança HTTP configurado.
+  - **Documentos novos:**
+    - `07-SEGURANCA-SOFTWARE.md`: fronteiras de confiança, matriz de acesso das 16 instruções e das 5 rotas, invariantes, chaves, dependências, arquitetura-alvo e checklist para cada mudança;
+    - `00-PAINEL.md`: resumo de uma página com números, urgências e respostas para a banca.
+  - **Relatório 06 ampliado:** seção 8 (quatro camadas antifraude contra o conluio) e seção 9 (plano ampliado do que fazer depois, por área e com dono).
+  - **Guia e skill:** guia "Por onde começar" no README; skill `conselho-seguranca` passa a ler e atualizar 00 e 07.
+- **Por quê:** pedido do Saulo para ter tudo estruturado no projeto, registrar a antifraude e mais medidas no relatório, e verificar a segurança no nível de software.
+- **Arquivos:** `Fiador Doc/00-PAINEL.md`, `07-SEGURANCA-SOFTWARE.md`, `06-CONSELHO-SEGURANCA.md`, `04-BUGS.md` (B-A24), `README.md`, `.claude/skills/conselho-seguranca/SKILL.md`.
+- **Verificação:** as listadas acima. Nenhum código do projeto foi alterado.
+- **Pendências:**
+  - rodar `cargo audit` (ferramenta não instalada) e fuzzing;
+  - build verificável;
+  - todas as correções do plano (06, seções 5, 8 e 9).
+
+## 2026-09-24 · Conselho de segurança (10 especialistas)
+- **Quem:** Claude Opus 5.5, orquestrando 10 subagentes com a skill nova `conselho-seguranca`.
+- **O quê:**
+  - **Skill** `.claude/skills/conselho-seguranca/` criada: orquestrador, modelo de achado e 10 perfis (red team on-chain, red team off-chain, CISO, auditor de smart contract, pagamentos Pix, atuário, regulatório, LGPD, PLD/fraude, SRE).
+  - **Revisão** de toda a arquitetura: das 13 brechas anteriores, 12 confirmadas (5 com prova) e 1 refutada (B-A11 → B-016); 21 achados novos (B-A21 a B-A41).
+  - **Documentos:** relatório `06-CONSELHO-SEGURANCA.md`; provas de conceito em `provas/`; correções em 01, 02 e 05 (B-017, ressalvas em D-14 e D-15).
+- **Por quê:** pedido do Saulo para que profissionais de cada área avaliassem a arquitetura, corrigissem a análise anterior e encontrassem falhas e lacunas, com a cibersegurança atuando com força.
+- **Arquivos:** `.claude/skills/conselho-seguranca/**`, `Fiador Doc/06-CONSELHO-SEGURANCA.md`, `Fiador Doc/provas/*`, `Fiador Doc/01-ARQUITETURA.md`, `02-FUNCOES.md`, `04-BUGS.md`, `05-DECISOES.md`, `README.md`.
+- **Verificação:**
+  - Os especialistas rodaram a suíte numa cópia no rascunho: 46 testes existentes + 11 provas, todos passando.
+  - Os achados 🔴 e 🟠 novos foram conferidos no código por mim (`initialize` sem restrição, `create_lease` sem `agency ≠ landlord`, período sem máximo, nenhum `emit!`, `.gitignore` sem `.env`, remoto público, uma única carteira em `Anchor.toml`, `setup-demo.ts` e `server.ts`).
+  - A refutação da B-A11 foi conferida em `claim_default.rs:72-83` e `pay_rent.rs:119-120`.
+  - Nenhum código do projeto foi alterado.
+- **Pendências:**
+  - plano por fase em 06, seção 5;
+  - `docs/SEGURANCA.md` (fora deste branch) precisa ser revisto (B-A41);
+  - renomear o teste citado em B-017;
+  - levar a skill e o Fiador Doc para a pasta principal.
+
+## 2026-09-24 · Revisão de brechas e 01-ARQUITETURA corrigida
+- **Quem:** Claude Opus 5.5
+- **O quê:** 01-ARQUITETURA passou a descrever o que o código faz de fato: regra exata da caução pela reputação, rendimento da demo, limite de 50% medido no aceite, quem assina cada instrução, para onde vai o dinheiro em cada passo, o que conta como calote, a proteção de cada rota e os poderes da chave do admin. Ganhou a seção 9 com 13 brechas encontradas na leitura do código, registradas como B-A08 a B-A20. Também corrigidos os erros de documentação B-014 e B-015 e acrescentada uma ressalva em D-04.
+- **Por quê:** pedido do Saulo para encontrar brechas na arquitetura e melhorar o documento.
+- **Arquivos:** `Fiador Doc/01-ARQUITETURA.md`, `Fiador Doc/04-BUGS.md`, `Fiador Doc/05-DECISOES.md`.
+- **Verificação:** leitura das 16 instruções em `programs/fiador/src/` e das rotas em `web/src/app/api/`. Nenhum código foi alterado; as brechas não foram reproduzidas em teste.
+- **Pendências:** corrigir B-A08 a B-A13 (ordem sugerida em 01-ARQUITETURA, seção 9), com um teste LiteSVM para cada; levar as brechas novas para `docs/SEGURANCA.md`.
+
+## 2026-09-24 · Criação do Fiador Doc
+- **Quem:** Claude Opus 5.5
+- **O quê:** criada a pasta `Fiador Doc/` com arquitetura, catálogo de funções, histórico, registro de bugs e decisões. A regra "toda IA deve alimentar o Fiador Doc" foi incluída em `CLAUDE.md` e em `AGENTS.md`.
+- **Por quê:** pedido do Saulo, para que qualquer IA que assuma o projeto saiba o que existe e registre o que mudar.
+- **Arquivos:** `Fiador Doc/*`, `CLAUDE.md`, `AGENTS.md`, `.claude/settings.json`, `.claude/hooks/fiador-doc-check.sh`.
+- **Trava automática:** hook de encerramento do Claude Code que impede terminar a sessão quando há arquivos de código (`programs/fiador/src|tests`, `web/src`, `web/scripts`, `scripts`) mais novos que este arquivo. Ele bloqueia uma vez por ciclo (`stop_hook_active`), para não entrar em loop.
+- **Verificação:** conteúdo conferido contra o código (instruções em `programs/fiador/src/lib.rs`, regras em `instructions/*.rs`, rotas em `web/src/app/api/`, exportações em `web/src/**`). Ao conferir, foi encontrado o erro de documentação B-012 (limite de 50% por imobiliária).
+- **Pendências:** B-A01 (mostrar o limite por imobiliária nas telas).
+
+## 2026-09-23 · Site novo a partir do canvas de design
+- **Quem:** Claude Opus 5.5, com dois subagentes (app do proprietário; investidor e reputação).
+- **O quê:** site refeito no design "Recibo" com cara de banco, ligado ao programa na Solana:
+  - componentes visuais em `web/src/ui/`;
+  - regras da história em `web/src/lib/historia.ts`;
+  - apps da inquilina (`/inquilino`), do proprietário (`/proprietario`), da imobiliária (`/imobiliaria`) e do investidor (`/investidor`);
+  - Palco da banca (`/apresentacao`), página inicial nova e reputação pública reescrita.
+
+  O console antigo passou para `/demo`, com o estilo em `web/src/app/demo/legacy.css`.
+- **Mudanças no estado (`useDemo`):**
+  - eventos com tipo, mês e valor, guardados no navegador e sincronizados entre abas (BroadcastChannel);
+  - `executar()` devolve a assinatura da transação;
+  - preparação das carteiras a cada sessão;
+  - textos da cobrança automática na linguagem da história.
+- **Por quê:** pedido do Saulo ("pode progredir") depois da aprovação do design com nota 9,5.
+- **Arquivos:** `web/src/ui/*`, `web/src/lib/historia.ts`, `web/src/components/{useDemo.ts,DemoProvider.tsx,PixFluxo.tsx}`, `web/src/app/{page.tsx,home.module.css,layout.tsx,globals.css}`, `web/src/app/{inquilino,proprietario,imobiliaria,investidor,apresentacao,reputacao}/**`.
+- **Verificação:**
+  - `npx tsc --noEmit` sem erros; as 20 rotas respondem 200;
+  - fluxo real testado no navegador contra a Solana local: contrato criado, caução por Pix, agosto pago com recibo, cobrança automática pagando setembro com a caução e o Palco mostrando tudo ao vivo;
+  - o subagente testou aporte, resgate pedido e resgate concluído.
+- **Pendências:** publicar na devnet; B-A03 a B-A07.
+
+## 2026-09-23 · Design no canvas (91 telas) com nota 9,5
+- **Quem:** Claude Opus 5.5, com uma IA crítica de UI/UX (subagente).
+- **O quê:** canvas "Fiador.sol — telas Recibo" com 91 telas, avaliado em 8 rodadas; nota final de 9,5 nas seis páginas (a última correção do investidor foi aplicada sem uma nova rodada). Serve de referência visual do site. Link: https://claude.ai/artifact/SwTMom6oEYX48GNaKG7vM7
+- **Arquivos:** gerador fora do repositório (scratchpad da sessão); registro em `docs/DESIGN.md` e `docs/CRITICA-DESIGN.md`.
+- **Verificação:** avaliação por página com critérios de coerência, linguagem, estética, jornadas, acessibilidade, layout e "cara de banco".
+- **Pendências:** nenhuma no design.
+
+## 2026-09-23 · Site da demo (versão 1, console técnico)
+- **Quem:** Claude Opus 5.5
+- **O quê:** primeiro site Next.js 16 com as rotas de API (estado, preparar, Pix simulado, keeper), o `useDemo`, o console com os quatro papéis numa tela (hoje em `/demo`), o script `setup-demo.ts`, o teste `e2e.ts` e o `scripts/demo-local.sh`.
+- **Arquivos:** `web/src/app/api/**`, `web/src/lib/*`, `web/src/components/{DemoConsole.tsx,Pix.tsx,useDemo.ts}`, `web/scripts/*`, `scripts/demo-local.sh`.
+- **Verificação:** fluxo completo pelo e2e na Solana local.
+- **Pendências:** o design antigo (fundo escuro com verde-neon) foi vetado e depois substituído.
+
+## 2026-09-23 · Programa Anchor com 16 instruções e 46 testes
+- **Quem:** Claude Opus 5.5
+- **O quê:** programa `fiador`:
+  - contrato, caução, pagamento, cobrança da carência, fundo de garantia com cotas e saque com aviso prévio;
+  - danos com decisão da imobiliária, acerto final com rendimento;
+  - reputação e selo Token-2022 intransferível.
+
+  46 testes com LiteSVM cobrindo as brechas de `docs/SEGURANCA.md`.
+- **Arquivos:** `programs/fiador/**`, `Anchor.toml`, `Cargo.toml`, `rust-toolchain.toml`.
+- **Verificação:** `cargo test`, 46/46.
+- **Pendências:** publicar na devnet.
+
+## 2026-09-22 · Visão, arquitetura e inscrição
+- **Quem:** Saulo com o Claude
+- **O quê:** README, `docs/ARQUITETURA.md` (plano), `docs/SEGURANCA.md`, `docs/ROTEIRO-VIDEOS.md`, `docs/inscricao.md`, `docs/contexto-chat.md`; repositório no GitHub (commit `afd05fa`).

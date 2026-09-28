@@ -1,0 +1,131 @@
+/* Área de investimentos (computador, 1280px). No celular, a barra lateral vira abas embaixo. */
+
+.casca { display: grid; grid-template-columns: 248px minmax(0, 1fr); min-height: 100dvh; background: var(--mesa); }
+
+/* ---------- barra lateral escura ---------- */
+.lateral {
+  background: var(--tinta); color: #fff; padding: 26px 16px 22px;
+  position: sticky; top: 0; height: 100dvh; display: flex; flex-direction: column; gap: 4px;
+}
+.logo { font-size: 22px; font-weight: 780; letter-spacing: -0.03em; color: #fff; text-decoration: none; padding: 0 12px; }
+.logo span { color: #a9b8ff; }
+.logo:hover { color: #fff; }
+.logoSub { padding: 0 12px 22px; font-size: 13px; color: var(--claro-sobre-tinta); }
+.menu { display: flex; flex-direction: column; gap: 4px; }
+.menu a {
+  display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 12px; border-radius: 12px;
+  color: var(--claro-sobre-tinta); text-decoration: none; font-size: 15px; font-weight: 600;
+}
+.menu a:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.menu a[aria-current="page"] { background: rgba(255, 255, 255, 0.12); color: #fff; font-weight: 720; }
+.lateralRodape { margin: auto 0 0; padding: 0 12px; font-size: 12px; line-height: 1.45; color: var(--claro-sobre-tinta); }
+
+/* ---------- barra de cima clara ---------- */
+.principal { min-width: 0; display: flex; flex-direction: column; }
+.topo {
+  display: flex; align-items: center; gap: 20px; min-height: 68px; padding: 10px 32px;
+  background: var(--cartao); border-bottom: 1px solid var(--linha); position: sticky; top: 0; z-index: 5;
+}
+.logoCelular { display: none; color: var(--tinta); padding: 0; font-size: 20px; }
+.logoCelular:hover { color: var(--tinta); }
+.logoCelular span { color: var(--caneta); }
+.rede {
+  display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 650; color: var(--ambar);
+  background: var(--ambar-s); padding: 6px 12px; border-radius: 999px; white-space: nowrap;
+}
+.pontoRede { width: 8px; height: 8px; border-radius: 50%; background: var(--ambar); }
+.acesso { font-size: 13px; color: var(--graf); white-space: nowrap; }
+.topoDireita { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.olho {
+  width: 44px; height: 44px; border: 0; border-radius: 12px; background: transparent; color: var(--tinta);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.olho:hover { background: var(--mesa); }
+.perfil { display: flex; align-items: center; gap: 10px; }
+.avatar {
+  width: 40px; height: 40px; border-radius: 50%; background: var(--tinta); color: #fff; flex: none;
+  display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700;
+}
+.perfilTxt { display: flex; flex-direction: column; line-height: 1.25; }
+.perfilTxt b { font-size: 14px; }
+.perfilTxt span { font-size: 13px; color: var(--graf); }
+
+.conteudo { padding: 28px 32px 56px; width: 100%; max-width: 1120px; display: flex; flex-direction: column; gap: 22px; }
+
+/* ---------- blocos das telas ---------- */
+.titulo { margin: 0; font-size: 28px; line-height: 1.15; letter-spacing: -0.025em; font-weight: 750; }
+.grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+.coluna { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+.estreito { max-width: 560px; display: flex; flex-direction: column; gap: 18px; }
+
+.heroi {
+  background: var(--tinta); color: #fff; border-radius: 20px; padding: 26px 28px;
+  display: flex; flex-direction: column; gap: 10px; box-shadow: 0 16px 32px -18px rgba(20, 30, 54, 0.6);
+}
+.heroi h1 { margin: 0; font-size: 15px; font-weight: 650; color: var(--claro-sobre-tinta); letter-spacing: 0; }
+.heroiLinha { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--claro-sobre-tinta); }
+.sobe { color: #86e0ad; font-weight: 700; }
+.desce { color: #ffb4ab; font-weight: 700; }
+.botoes { display: flex; gap: 12px; flex-wrap: wrap; padding-top: 8px; }
+.botoes > * { flex: 1 1 180px; }
+
+.numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.numero { background: var(--cartao); border-radius: 16px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.numero > span:first-child { font-size: 13px; font-weight: 650; color: var(--graf); }
+.numero > span:last-child { font-size: 13px; color: var(--graf); }
+
+.barraFundo { height: 10px; border-radius: 5px; background: var(--verde); overflow: hidden; display: flex; }
+.barraFundo > div { height: 100%; background: var(--graf); }
+
+.campo { display: flex; flex-direction: column; gap: 8px; }
+.campo label { font-size: 14px; font-weight: 650; color: var(--graf); }
+.campoCaixa {
+  display: flex; align-items: center; gap: 8px; min-height: 60px; padding: 0 16px; border-radius: 14px;
+  border: 1.5px solid var(--borda-campo); background: var(--cartao);
+}
+.campoCaixa:focus-within { outline: 3px solid var(--caneta); outline-offset: 2px; }
+.campoCaixa span { font-size: 22px; font-weight: 650; color: var(--graf); }
+.campoCaixa input {
+  flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font: inherit;
+  font-size: 30px; font-weight: 750; letter-spacing: -0.03em; color: var(--tinta); font-variant-numeric: tabular-nums;
+}
+.chips { display: flex; gap: 8px; flex-wrap: wrap; }
+.chips button {
+  min-height: 44px; padding: 0 16px; border-radius: 999px; border: 1.5px solid var(--linha); background: var(--cartao);
+  color: var(--tinta); font-size: 14px; font-weight: 650; cursor: pointer;
+}
+.chips button[aria-pressed="true"] { border-color: var(--caneta); color: var(--caneta); background: var(--caneta-s); }
+.erroCampo { margin: 0; font-size: 14px; color: var(--verm); font-weight: 600; }
+
+.doc summary {
+  list-style: none; display: flex; align-items: center; gap: 14px; min-height: 64px; padding: 10px 16px; cursor: pointer;
+}
+.doc summary::-webkit-details-marker { display: none; }
+.docIcone { width: 42px; height: 42px; border-radius: 12px; background: var(--mesa); display: flex; align-items: center; justify-content: center; flex: none; color: var(--caneta); }
+.docTxt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.docTxt b { font-size: 15px; }
+.docTxt span { font-size: 13px; color: var(--graf); }
+.docAbrir { font-size: 14px; font-weight: 650; color: var(--caneta); white-space: nowrap; }
+.doc[open] .docAbrir::after { content: " ▴"; }
+.doc:not([open]) .docAbrir::after { content: " ▾"; }
+.docCorpo { padding: 0 16px 18px 72px; display: flex; flex-direction: column; gap: 4px; }
+
+.soCelular { display: none; }
+
+/* ---------- celular e tablet estreito ---------- */
+@media (max-width: 899px) {
+  .casca { grid-template-columns: minmax(0, 1fr); }
+  .lateral { display: none; }
+  .topo { padding: 8px 12px 8px 16px; gap: 10px; min-height: 60px; flex-wrap: wrap; }
+  .logoCelular { display: block; }
+  .acesso, .perfilTxt { display: none; }
+  .rede { order: 5; flex-basis: 100%; justify-content: center; font-size: 12px; padding: 4px 10px; }
+  .conteudo { padding: 18px 14px 120px; gap: 18px; }
+  .grade { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .coluna { gap: 18px; }
+  .heroi { padding: 22px 20px; }
+  .numeros { grid-template-columns: minmax(0, 1fr); }
+  .titulo { font-size: 24px; }
+  .docCorpo { padding-left: 16px; }
+  .soCelular { display: block; }
+}

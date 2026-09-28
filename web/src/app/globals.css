@@ -1,0 +1,58 @@
+/* Fiador.sol — direção "Recibo" com estrutura de app de banco.
+   Tokens iguais ao canvas de design (docs/DESIGN.md, seção 10). */
+:root {
+  --mesa: #e9edf2;
+  --papel: #fffefb;
+  --cartao: #ffffff;
+  --linha: #d9dfe8;
+  --tinta: #141e36;
+  --graf: #4f596c;
+  --apagado: #5f6980;
+  --caneta: #1f3fbf;
+  --caneta-escura: #162f92;
+  --caneta-s: #e4e9fa;
+  --verde: #23704a;
+  --verde-s: #e3f1e9;
+  --verm: #b0271f;
+  --verm-s: #fbeae8;
+  --roxo: #5a3cb0;
+  --ambar: #8a5208;
+  --ambar-s: #fbf1e2;
+  --borda-campo: #8a94a6;
+  --claro-sobre-tinta: #c9d0dd;
+  --sys: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+  --carimbo: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  font-family: var(--sys);
+  color: var(--tinta);
+  background: var(--mesa);
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--caneta); }
+a:hover { color: var(--caneta-escura); }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--caneta);
+  outline-offset: 2px;
+}
+button { font: inherit; }
+.sr {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+.nw { white-space: nowrap; }
+@keyframes carimbar {
+  0% { transform: scale(2.2) rotate(-14deg); opacity: 0; }
+  55% { transform: scale(0.92) rotate(var(--rot, -8deg)); opacity: 1; }
+  72% { transform: scale(1.03) rotate(var(--rot, -8deg)); }
+  100% { transform: scale(1) rotate(var(--rot, -8deg)); opacity: 1; }
+}
+@keyframes girar { to { transform: rotate(360deg); } }
+@keyframes surgir { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 1ms !important; animation-iteration-count: 1 !important; transition-duration: 1ms !important; }
+}

@@ -1,0 +1,24 @@
+.anchor
+.DS_Store
+target
+**/*.rs.bk
+node_modules
+test-ledger
+.yarn
+.surfpool
+
+# Rotina pessoal (tarefas do Saulo e app do Mac) — fica fora do repositório público
+rotina/
+
+# Solana local da demo
+.localnet
+
+# Segredos: nunca vão para o GitHub (B-A36). Só o modelo .env.example é versionado.
+.env*
+!.env.example
+*keypair*.json
+id.json
+
+# Cópias de trabalho temporárias do Claude Code
+.claude/worktrees/
+.claude/settings.local.json
