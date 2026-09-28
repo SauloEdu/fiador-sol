@@ -18,7 +18,11 @@ Da mais nova para a mais antiga. **Toda mudança no software ganha uma entrada a
   - na segunda, atualizou assinando com a chave de atualização.
 
   Depois, a posse local voltou ao admin.
-- **Pendências:** SOL de teste na devnet (torneira pede login do Saulo).
+- **Verificação final do dia:**
+  - `next build` (produção) passou, com 33 rotas;
+  - `cargo test` 67/67;
+  - Solana local e site da demo no ar.
+- **Pendências:** SOL de teste na devnet. A torneira pela linha de comando recusou por limite; a do site pede login do Saulo no GitHub. Com o SOL, basta rodar `./scripts/publicar-devnet.sh`.
 
 ## 2026-09-28 · Pedido de saque com prazo (B-A12)
 - **Quem:** Claude Opus 5.5
