@@ -55,15 +55,19 @@ A Colosseum pede um vídeo de 1 minuto por semana com o progresso e as dificulda
 
 **Como gravar (15 minutos):** celular na horizontal para o rosto nos primeiros 10 s, depois a tela do Mac mostrando o Palco (`/apresentacao`) e as telas. Pode ler o texto num teleprompter. Não precisa editar muito: legenda automática do CapCut e pronto.
 
-### Semana 2 · prazo 28/09, 8h PDT (12h de Brasília)
+### Semana 2 · versão final (28/09)
 
-| Tempo | Imagem | Fala |
-|---|---|---|
-| 0:00–0:08 | Rosto | **EN:** "Hi, I'm Saulo, building Fiador.sol: a rent guarantee on Solana that replaces the guarantor in Brazil." <br>**PT:** Oi, sou o Saulo e estou construindo o Fiador.sol: uma garantia de aluguel na Solana que substitui o fiador no Brasil. |
-| 0:08–0:25 | Tela: código e `cargo test` 46/46 | **EN:** "This week we went from a program to a product. The Anchor program has 16 instructions and 46 passing tests: deposit escrow, automatic payment to the landlord when rent is late, a guarantee pool and on-chain reputation." <br>**PT:** Nesta semana saímos de um programa para um produto. O programa Anchor tem 16 instruções e 46 testes passando: cofre da caução, pagamento automático ao proprietário quando o aluguel atrasa, um fundo de garantia e reputação on-chain. |
-| 0:25–0:38 | Tela: Palco com o celular da Ana e os registros da Solana | **EN:** "On top of it, a banking-style app for each person (tenant, landlord, agency and investor) and a live stage that shows every Solana transaction as it happens." <br>**PT:** Em cima dele, um app com cara de banco para cada pessoa (inquilina, proprietário, imobiliária e investidor) e um palco ao vivo que mostra cada transação da Solana na hora. |
-| 0:38–0:55 | Tela: `Fiador Doc/08-RESPOSTA-A-GOLPE.md` ou rosto | **EN:** "Then we attacked our own design. A ten-expert security review found 40 issues. The biggest one is collusion between landlord, tenant and agency. Our answer: coverage that grows with payment history, a landlord deductible, and fund payouts held in quarantine." <br>**PT:** Depois atacamos nosso próprio desenho. Uma revisão de segurança com dez especialistas achou 40 problemas. O maior é o conluio entre proprietário, inquilina e imobiliária. Nossa resposta: cobertura que cresce com o histórico de pagamentos, franquia do proprietário e pagamentos do fundo em quarentena. |
-| 0:55–1:00 | Rosto | **EN:** "Next week: shipping those fixes and deploying to devnet. Thanks!" <br>**PT:** Semana que vem: essas correções e a publicação na devnet. Obrigado! |
+Página de gravação com as cenas, o que clicar, a edição e o teleprompter: https://claude.ai/artifact/TeJbU8xJ9yGEjyFh6o4fvv
+
+**Ideia:** contar uma história, sem números técnicos. Quem assiste precisa ver o Carlos recebendo **sozinho**.
+
+| Tempo | Imagem | Fala (PT) | Legenda (EN) |
+|---|---|---|---|
+| 0:00–0:08 | Rosto | "Eu trabalho com ações de despejo. Todo mês eu vejo proprietário sem receber e inquilino sem fiador. Então eu construí o Fiador.sol." | I work on eviction lawsuits. Every month I see landlords unpaid and tenants with no guarantor. So I built Fiador.sol. |
+| 0:08–0:22 | Palco: contrato, caução, agosto pago | "A Ana aluga sem fiador. A caução vai por Pix para um cofre na Solana que ninguém consegue mexer. Ela paga agosto, e o Carlos recebe na hora." | Ana rents with no guarantor. Her deposit goes via Pix into a vault on Solana that nobody can touch. She pays August, and Carlos gets paid instantly. |
+| 0:22–0:36 | Palco: setembro atrasa, carimbo PAGO PELA CAUÇÃO | "Agora ela atrasa setembro. Sem advogado, sem Justiça: acabou a carência, e o cofre pagou o Carlos sozinho. Está tudo registrado aqui, na blockchain." | Now she misses September. No lawyer, no court: when the grace period ends, the vault pays Carlos on its own. Every step is recorded on-chain. |
+| 0:36–0:50 | Central de risco: pausar e suspender | "Essa semana a gente atacou o próprio sistema, com dez especialistas. E se for golpe? Um clique: o fundo para, a imobiliária é suspensa, e o pagamento do fundo fica em quarentena." | This week we attacked our own system with ten experts. What if it's fraud? One click: the fund stops, the agency is suspended, and the fund's payout is held in quarantine. |
+| 0:50–1:00 | Rosto | "Próximo passo: devnet e um piloto com imobiliárias em Brasília. Fiador.sol: aluguel sem fiador, e proprietário sem calote." | Next: devnet and a pilot with real estate agencies in Brasília. Fiador.sol: renting without a guarantor, and landlords who always get paid. |
 
 ### Semana 3 · prazo provável 05/10
 
