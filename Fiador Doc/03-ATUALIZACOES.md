@@ -2,6 +2,14 @@
 
 Da mais nova para a mais antiga. **Toda mudança no software ganha uma entrada aqui** (modelo no README). As entradas anteriores a 2026-09-24 foram reconstruídas a partir das conversas de construção.
 
+## 2026-10-15 · Site, pitch deck no Cena e inscrição no ICM Lab
+- **Quem:** Claude Opus 5.5 (gerente) e subagentes Sonnet
+- **O quê:** pitch deck novo no padrão Beexbe (projeto Criador de Apresentações, pasta `Fiador.sol - ICM Lab`) e site do Fiador.sol (`Fiador.sol - Site`), os dois publicados no Cena: https://cena.beexbe.com/fiador-icm/ e https://cena.beexbe.com/fiador/. Formulário do ICM Lab preenchido; respostas em `docs/inscricao-icm-lab.md`.
+- **Por quê:** a inscrição pede site, LinkedIn e deck. O deck abre pela dor (o comprovante do aluguel que não caiu) e usa o QuintoAndar como referência de escala.
+- **Arquivos:** `docs/inscricao-icm-lab.md`, Fiador Doc 03. O código do deck e do site fica fora deste repositório (Criador de Apresentações).
+- **Verificação:** avaliador de slides com nota 10; build e lint dos dois projetos; as duas URLs respondem 200.
+- **Pendências:** o Saulo anexa o PDF do deck e envia o formulário. Corrigida a frase "10 especialistas" (a revisão de segurança foi interna).
+
 ## 2026-09-28 · Posse do programa fora da hospedagem (B-A22)
 - **Quem:** Claude Opus 5.5
 - **O quê:** `scripts/publicar-devnet.sh`:
