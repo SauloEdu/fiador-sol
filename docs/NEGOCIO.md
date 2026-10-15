@@ -37,7 +37,9 @@ Não competimos de frente com o QuintoAndar dentro da plataforma dele: lá o pro
 
 **O que admitir:** para a inquilina com bom crédito, o QuintoAndar é mais cômodo (não pede caução). O nosso público principal é quem está fora dessa porta e as imobiliárias que não são QuintoAndar.
 
-**Frase para a banca:** "O QuintoAndar resolve a garantia para quem aluga com o QuintoAndar. A gente resolve para as milhares de imobiliárias independentes que competem com ele e para quem é recusado na análise de crédito. E, diferente de uma garantia que depende de uma empresa, a nossa fica num cofre com regras que continuam valendo mesmo se a empresa sumir."
+**Posicionamento (decidido em 15/10/2026):** o QuintoAndar é a **referência de escala**, não o argumento de mercado. Ele provou que garantia sem fiador vira uma empresa de US$ 5,1 bilhões, com cerca de 300 mil contratos protegidos [Q5][Q6], que são menos de 2% dos 17,8 milhões de domicílios alugados. O Fiador.sol leva esse benefício a qualquer imobiliária, onde estão mais de 98% dos aluguéis. **Não usar o fim da QuintoCred (3 mil imobiliárias) como tamanho de mercado:** faz o mercado parecer pequeno. Ele só serve como lição sobre o preço do risco.
+
+**Frase para a banca:** "O QuintoAndar provou que garantia sem fiador vira empresa de bilhões ocupando menos de 2% dos aluguéis do país. O Fiador.sol leva isso aos outros 98%, em qualquer imobiliária."
 
 ## 3. Como ganhamos dinheiro
 
@@ -59,7 +61,7 @@ Contratos ativos no fim de cada ano:
 | **Base** | 500 | 3.000 | 12.000 | 35.000 | 80.000 |
 | Otimista | 1.000 | 6.000 | 25.000 | 70.000 | 150.000 |
 
-Referências de escala: a QuintoCred tinha 45 mil contratos quando fechou [Q4]; o Brasil tem 17,8 milhões de domicílios alugados. 80 mil contratos são cerca de 0,45% disso.
+Referências de escala: o QuintoAndar garante cerca de 300 mil contratos [Q5]; o Brasil tem 17,8 milhões de domicílios alugados. 80 mil contratos em 2031 são um quarto do que o QuintoAndar já garante hoje; a meta seguinte é a mesma escala.
 
 Receita da plataforma (média de contratos no ano × R$ 480):
 
@@ -97,6 +99,9 @@ Exemplo: um investidor entra no começo com R$ 1,35 milhão (cerca de US$ 250 mi
 - [Q1] QuintoAndar, Fiança Garantida: https://www.quintoandar.com.br/ajuda/artigo/o-que-e-a-fianca-garantida-e-como-ela-funciona-4JcH5TRoPR2SUkQPXx0c0o
 - [Q2] QuintoAndar, pagamento garantido: https://www.quintoandar.com.br/guias/como-alugar/pagamento-garantido-no-quintoandar-donos-de-imoveis-recebem-o-aluguel-em-dia-2/
 - [Q3] Seu Dinheiro, garantias de aluguel (2025): https://www.seudinheiro.com/2025/financas-pessoais/sem-fiador-ou-caucao-garantias-de-aluguel-evoluem-e-novas-opcoes-prometem-seguranca-para-o-proprietario-e-retorno-ao-inquilino-mlim/
+- [Q5] QuintoAndar Newsroom, R$ 20 bi transacionados e 300 mil contratos (2025): https://www.quintoandar.com.br/newsroom/quintoandar-ultrapassa-r-20-bi-em-valores-transacionados-em-um-ano/
+- [Q6] InfoMoney, avaliação de US$ 5,1 bilhões: https://www.infomoney.com.br/negocios/quintoandar-vale-mais-de-us-5-bilhoes-apos-extensao-de-investimento/
+- CNseg via SEGS, seguro-fiança +195% entre 2020 e 2024: https://www.segs.com.br/seguros/428088-mercado-de-seguro-fianca-cresce-quase-r-100-milhoes-e-supera-desempenho-de-2024/amp
 - [Q4] InfoMoney, fim da QuintoCred: https://www.infomoney.com.br/minhas-financas/quintoandar-encerra-servico-de-garantia-quintocred-e-surpreende-3-mil-imobiliarias/
 - [C1] Loft/CredPago: https://loft.com.br/credpago
 - [C2] Taxas CredPago (imobiliária parceira): https://ajuda.giacomelli.com.br/hc/pt-br/articles/7115099182733-Como-funciona-loca%C3%A7%C3%A3o-com-tipo-de-garantia-CREDPAGO
