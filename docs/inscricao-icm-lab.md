@@ -1,6 +1,6 @@
 # Inscrição — ICM Lab Solana (Darwin Startups)
 
-Formulário: https://airtable.com/appzXiVkuxVAOCDrt/shr0bC4ltLNcVECO1 (preenchido pelo Claude em 2026-10-15; o envio e o anexo do deck ficam com o Saulo).
+Formulário: https://airtable.com/appzXiVkuxVAOCDrt/shr0bC4ltLNcVECO1 (preenchido pelo Claude em 2026-10-15; o envio e o anexo do deck ficam com o Saulo). Inscrições prorrogadas até 25/10/2026 (post da Darwin no Instagram, informado pelo Saulo).
 Contato pessoal (e-mail e telefone) foi só no formulário, não neste arquivo.
 
 | Campo | Resposta |
